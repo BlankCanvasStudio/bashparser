@@ -20,6 +20,8 @@ def return_paths_to_node_type(node: bashlex.ast.node, current_path: list, paths:
 
 
 def return_variable_paths(node: bashlex.ast.node, current_path: list, paths: list):
+    """(node, [], []) Return locs in ast where variables are. empty arrays cause recursion
+    returns array of path_variable objects which are used to locate variables"""
     return return_paths_to_node_type(node, current_path, paths, 'parameter')
 
 

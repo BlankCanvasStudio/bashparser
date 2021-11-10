@@ -1,11 +1,11 @@
+"""Describe module and how to use it here..."""
+
 from bashparse import variables, commands, regex
 import bashlex
 
 parse = bashlex.parse
 
 return_variable_paths = variables.return_variable_paths  
-	# (node, [], []) Return locs in ast where variables are. empty arrays cause recursion
-	# returns array of path_variable objects which are used to locate variables
 replace_variables = variables.replace_variables  
 	# (node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
 	# returns an array of nodes, which make up all the possible options for all variable replacementss
