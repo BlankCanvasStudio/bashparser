@@ -1,14 +1,9 @@
-from bashparse import variables, commands, regex
+from bashparse import variables, commands, regex, ast, path_variable
 import bashlex
 
 parse = bashlex.parse
 
-return_variable_paths = variables.return_variable_paths  
-	# (node, [], []) Return locs in ast where variables are. empty arrays cause recursion
-	# returns array of path_variable objects which are used to locate variables
-replace_variables = variables.replace_variables  
-	# (node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
-	# returns an array of nodes, which make up all the possible options for all variable replacementss
+
 update_variable_list = variables.update_variable_list  
 	# (node, variable dict) strips any variables out of ast and saves them to variable list. Also saves mv x y for later use (could be separated)
 	# returns an updated variable dict
@@ -18,17 +13,9 @@ substitute_variables = variables.substitute_variables
 add_variables_to_var_list = variables.add_var_to_var_list
 	# (variable dict, name, value) Adds the corresponding name and value to dictionary. Planning on people misuing the dictionary
 	# returns the updated variable dict
-return_paths_to_node_type = variables.return_paths_to_node_type
-	# (node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
-	# returns a list of path_variables to those nodes
-	# if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function
-shift_tree_pos = variables.shift_tree_pos
-	# The pos variable identifies where in the parsed string a particular value is. if the string gets longer we need to adjust it (ie var repalcement)
-	# shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
-	# super nice use but necessary if you want to do massive work with the framework. 
-	# returns the shifted tree (ie a bashlex.ast.node)
-shift_tree_pos_to_start = variables.shift_tree_pos_to_start
-	# shifts the pos variable so that it starts a 0. just a userful wrapper of the above class
+replace_variables = variables.replace_variables  
+	# (node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
+	# returns an array of nodes, which make up all the possible options for all variable replacementss
 
 
 node_level_regex = regex.node_level_regex
@@ -44,3 +31,21 @@ find_specific_commands = commands.find_specific_commands
 return_commands_from_variable_delcaraction = commands.return_commands_from_variable_delcaraction
 	# (node) strips the commands from a variable declaration if its of the form a=$(some command)\
 	# returns a list of any commands found in the node
+
+
+shift_tree_pos = ast.shift_ast_pos
+	# The pos variable identifies where in the parsed string a particular value is. if the string gets longer we need to adjust it (ie var repalcement)
+	# shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
+	# super nice use but necessary if you want to do massive work with the framework. 
+	# returns the shifted tree (ie a bashlex.ast.node)
+shift_tree_pos_to_start = ast.shift_ast_pos_to_start
+	# shifts the pos variable so that it starts a 0. just a userful wrapper of the above class
+return_variable_paths = ast.return_variable_paths  
+	# (node, [], []) Return locs in ast where variables are. empty arrays cause recursion
+	# returns array of path_variable objects which are used to locate variables
+return_paths_to_node_type = ast.return_paths_to_node_type
+	# (node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
+	# returns a list of path_variables to those nodes
+	# if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function
+
+path_variable = path_variable.path_variable
