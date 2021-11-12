@@ -3,7 +3,7 @@ from bashparse.ast import return_paths_to_node_type, return_variable_paths
 import bashlex, copy
 
 
-def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_value:int, length_old_value:int, name:str):
+def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_value:int, length_old_value:int):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
     if type(length_new_value) is not int: raise ValueError('length_new_value must be an int')
@@ -30,11 +30,11 @@ def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_valu
                     node.pos = ( node.pos[0], node.pos[1] - length_old_value + length_new_value )
                     node = node.output
                     orig_node = orig_node.output
-        update_trees_pos(node, path_to_update[1:], length_new_value, length_old_value, name)
+        update_trees_pos(node, path_to_update[1:], length_new_value, length_old_value)
 
         if hasattr(orig_node, 'parts'):
             for i in range(path_to_update[0] + 1, len(orig_node.parts)):
-                update_trees_pos(orig_node.parts[i], [-1], length_new_value, length_old_value, name)
+                update_trees_pos(orig_node.parts[i], [-1], length_new_value, length_old_value)
     
     if path_to_update == [-1]:
         node.pos = ( node.pos[0] - length_old_value + length_new_value, node.pos[1] - length_old_value + length_new_value)
@@ -44,7 +44,7 @@ def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_valu
             node = node.output
         if hasattr(node, 'parts'):
             for part in node.parts:
-                update_trees_pos(part, [-1], length_new_value, length_old_value, name)
+                update_trees_pos(part, [-1], length_new_value, length_old_value)
 
 
 def update_command_substitution(node:bashlex.ast.node):
@@ -128,7 +128,7 @@ def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
                     node_one_up.word = node_one_up.word[:variable_start] + path_val.value[j] + node_one_up.word[variable_end:]
                     if has_commandsubstitution:
                         update_command_substitution(node=replaced_trees[(i*len(path_val.value)) + j])
-                    update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path[:-1], length_new_value=len(path_val.value[j]), length_old_value=variable_end - variable_start, name=path_val.node.value)
+                    update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path[:-1], length_new_value=len(path_val.value[j]), length_old_value=variable_end - variable_start)
                     del node_one_up.parts[path_val.path[-1]]  # Remove parameter node because it has been replaced
     return replaced_trees
 
