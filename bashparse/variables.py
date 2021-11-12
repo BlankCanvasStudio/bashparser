@@ -31,7 +31,6 @@ def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_valu
                     node = node.output
                     orig_node = orig_node.output
         update_trees_pos(node, path_to_update[1:], length_new_value, length_old_value)
-        print(node)
         if hasattr(orig_node, 'parts'):
             for i in range(path_to_update[0] + 1, len(orig_node.parts)):
                 update_trees_pos(orig_node.parts[i], [-1], length_new_value, length_old_value)
@@ -83,6 +82,9 @@ def update_command_substitution(node:bashlex.ast.node):
 def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
     # The name of the variable is store in node.value
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(paths) is not list: raise ValueError('paths must be a list')
+    for el in paths:
+        if type(el) is not path_variable: raise ValueError('the elements of the paths list must be ints')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
     unique_names = []
     unique_trees_needed = 1
