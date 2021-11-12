@@ -46,5 +46,5 @@ def return_commands_from_command_substitutions(node):
     commands = []
     command_substitutions = return_paths_to_node_type(node, [], [], 'commandsubstitution')
     for substitution in command_substitutions:
-        commands += [substitution.node.command]
+        commands = [substitution.node.command] + commands
     return commands
