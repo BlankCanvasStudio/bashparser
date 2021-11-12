@@ -4,23 +4,27 @@ import bashlex
 
 class TestVariables(TestCase):
 
-    def update_trees_pos(self):
+    def test_update_trees_pos(self):
         self.assertRaises(ValueError, update_trees_pos, 'something', [], 0, 0)
         self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], 'something', 0, 0)
         self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], [], 'something', 0)
         self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], [], 0, 'something')
 
-    def update_command_substitution(self):
+
+    def test_update_command_substitution(self):
         self.assertRaises(ValueError, update_command_substitution, 'something')
     
+
     def test_replace_variables(self):
         self.assertRaises(ValueError, replace_variables, 'something', [], {})
         self.assertRaises(ValueError, replace_variables, bashlex.parse('cd here')[0], 'something', {})
         self.assertRaises(ValueError, replace_variables, bashlex.parse('cd here')[0], [], [])
     
+
     def test_substitute_variables(self):
         self.assertRaises(ValueError, substitute_variables, 'something', {})
         self.assertRaises(ValueError, substitute_variables, bashlex.parse('cd here')[0], [])
+
 
     def test_variable_replacement_functions(self):
         # This code actually tests substitute_variables, update_trees_pos, update_command_substitution, and replace variables
@@ -64,11 +68,6 @@ class TestVariables(TestCase):
         ]
         replaced_nodes = substitute_variables(for_node, var_list)
         replaced_nodes = [str(x) for x in replaced_nodes]
-
-        # for i in range(0, len(replaced_nodes)):
-        #     print(replaced_nodes[i])
-        #     print(result_strings[i])
-
         self.assertTrue(replaced_nodes == result_strings)
         # Test that list nodes replaced and returned properly 
         nodes = bashlex.parse('n=1;a=2$n')
