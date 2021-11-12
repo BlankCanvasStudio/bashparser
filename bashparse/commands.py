@@ -12,7 +12,7 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
     if type(saved_command_dictionary) is not dict: raise ValueError('saved_command_dictionary must be a dictionary')
     if type(return_as_string) is not bool: raise ValueError('return_as_string must be a bool')
 
-    command_paths = return_paths_to_node_type(node, [], [], 'command')
+    command_paths = return_paths_to_node_type(node, 'command')
     for path in command_paths:
         command_node = path.node
         if len(command_node.parts) and command_node.parts[0].word in commands_looking_for:
@@ -33,9 +33,9 @@ def return_commands_from_variable_delcaraction(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
 
     commands = []
-    assignments = return_paths_to_node_type(node, [], [], 'assignment')
+    assignments = return_paths_to_node_type(node, 'assignment')
     for assignment in assignments:
-        command_substitutions = return_paths_to_node_type(assignment.node, [], [], 'commandsubstitution')
+        command_substitutions = return_paths_to_node_type(assignment.node, 'commandsubstitution')
         for substitution in command_substitutions:
             commands += return_commands_from_command_substitutions(substitution.node)
     return commands
@@ -44,7 +44,7 @@ def return_commands_from_variable_delcaraction(node):
 def return_commands_from_command_substitutions(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     commands = []
-    command_substitutions = return_paths_to_node_type(node, [], [], 'commandsubstitution')
+    command_substitutions = return_paths_to_node_type(node, 'commandsubstitution')
     for substitution in command_substitutions:
         commands = [substitution.node.command] + commands
     return commands

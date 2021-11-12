@@ -25,20 +25,22 @@ def shift_ast_pos_to_start(node):
 
 
 # Make a version that only requires node and node_type
-def return_paths_to_node_type(node, current_path, paths, node_type):
+def execute_return_paths_to_node_type(node, current_path, paths, node_type):
     """(node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
 	returns a list of path_variables to those nodes
 	if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function"""
     
     if hasattr(node, 'parts') and len(node.parts): 
-        for i in range(len(node.parts) - 1, -1, -1): paths = return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
+        for i in range(len(node.parts) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
         # We iterate inreverse order here because the first elements we replace should be the farthest to the right in the string
         # This is so that the indexing doesn't change as we do the variable replacements. Will add section to maintain pos but for now
         # this is done this way to be safe and in the event that pos is added, it will work just the same 
+    if hasattr(node, 'list') and len(node.list):
+        for i in range(len(node.list) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.list[i], current_path + [i], paths, node_type)
     # If its a redirect node, call the replacement on the node its redirection to
-    if node.kind == 'redirect' and hasattr(node, 'output'): paths = return_paths_to_node_type(node.output, current_path, paths, node_type) 
+    if node.kind == 'redirect' and hasattr(node, 'output'): paths = execute_return_paths_to_node_type(node.output, current_path, paths, node_type) 
     # If its a command node, call the replacement on the node its actually referencing
-    if hasattr(node, 'command'): paths = return_paths_to_node_type(node.command, current_path, paths, node_type)
+    if hasattr(node, 'command'): paths = execute_return_paths_to_node_type(node.command, current_path, paths, node_type)
     # If the node is a parameter node, save its location into a variable path object
     if node.kind == node_type:
         paths += [ path_variable(path=current_path, node=node) ]   
@@ -47,12 +49,13 @@ def return_paths_to_node_type(node, current_path, paths, node_type):
     return paths
 
 
-# Make a version that only requires node and node_type
-def return_variable_paths(node, current_path, paths):
-    """(node, [], []) Return locs in ast where variables are. empty arrays cause recursion
-	returns array of path_variable objects which are used to locate variables"""
-    
-    return return_paths_to_node_type(node, current_path, paths, 'parameter')
+def return_paths_to_node_type(node, node_type):
+    return execute_return_paths_to_node_type(node, [], [], node_type)
+
+
+def return_variable_paths(node):
+    return execute_return_paths_to_node_type(node, [], [], 'parameter')
+
 
 def convert_tree_to_string(node):
     command = None

@@ -49,7 +49,7 @@ def update_trees_pos(node, path_to_update, length_new_value, length_old_value):
 
 def update_command_substitution(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
-    command_substitutions_paths = return_paths_to_node_type(node, [], [], 'commandsubstitution')
+    command_substitutions_paths = return_paths_to_node_type(node, 'commandsubstitution')
 
     for path_var in command_substitutions_paths:
         command_node = node
@@ -173,13 +173,15 @@ def substitute_variables(node, var_list):
             replaced_nodes += [node]
     
     elif node.kind == 'command':
-        paths = return_variable_paths(node, [], [])
+        paths = return_variable_paths(node)
+        print('paths: ', paths)
         new_nodes = replace_variables(node, paths, var_list)
         replaced_nodes += new_nodes  
     
     elif node.kind == 'for': 
         var_list = update_var_list_with_for_loop(node, var_list)  # This is so that we can use the for loop iterator to replace stuff later
-        paths = return_variable_paths(node, [], [])
+        paths = return_variable_paths(node)
+        print('paths: ', paths)
         replaced_nodes += replace_variables(node, paths, var_list) 
 
     elif node.kind != 'pipeline' and node.kind != 'operator' and node.kind != 'word':

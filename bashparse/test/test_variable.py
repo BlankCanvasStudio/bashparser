@@ -39,6 +39,8 @@ class TestVariables(TestCase):
             "CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 11) word='testing=one')] pos=(0, 11))",
             "CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 11) word='testing=two')] pos=(0, 11))"
         ]
+        print(replaced_nodes)
+        print(result_string)
         self.assertTrue(result_string == replaced_nodes)
         # Verify that command substitutions and variable replacements in that command substitution work
         var_list = {'http_server':['dns.cyberium.cc']}
