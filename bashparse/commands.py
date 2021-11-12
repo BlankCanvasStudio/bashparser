@@ -8,7 +8,11 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
     if node.kind == 'for' or node.kind == 'list' or node.kind == 'commandsubstitution':
         for part in node.parts:
             saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
+    if node.kind == 'compound':
+        for part in node.list:
+            saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
     elif node.kind == 'command' and node.parts[0].word in commands_looking_for:
+            if node.parts[0].word not in saved_command_dictionary: saved_command_dictionary[node.parts[0].word] = []
             if return_as_string:
                 command = ""
                 for el in node.parts:
@@ -16,6 +20,7 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
                         command += el.word + ' '
                     elif el.kind == 'redirect': 
                         command +=  el.type + ' ' + el.output.word + ' '
+                command = command[:-1]  # remove final space because thats wrong
                 if command not in saved_command_dictionary[node.parts[0].word]: 
                     saved_command_dictionary[node.parts[0].word] += [command]
             else:
@@ -40,3 +45,15 @@ def return_commands_from_variable_delcaraction(node):
 
 
 # Add function to pull all commands executed via a command substitution
+def return_commands_from_command_substitutions(node):
+    commands = []
+    if hasattr(node, 'parts'): 
+        for part in node.parts:
+            commands += return_commands_from_command_substitutions(part)
+    if hasattr(node, 'command'): 
+        commands += return_commands_from_command_substitutions(node.command)
+        if node.kind == 'commandsubstitution':
+            commands += node.command
+    if hasattr(node, 'output'):   # some nodes are just pass through nodes
+        commands+=return_commands_from_command_substitutions(node.output)
+    return commands
