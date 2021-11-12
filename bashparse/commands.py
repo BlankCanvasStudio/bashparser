@@ -1,6 +1,10 @@
 import bashlex, copy
 
 def find_specific_commands(node:bashlex.ast.node, commands_looking_for:list, saved_command_dictionary:dict, return_as_string:bool):
+    """(node, list of commands you're looking for, dict to save commands into, bool if the nodes should be saved as strings (and not ast nodes))
+	This looks for given commands in an ast node. if it is a command then it gets saved to the dict
+	Returns the updated command dictionary"""
+    
     if node.kind == 'for' or node.kind == 'list' or node.kind == 'commandsubstitution':
         for part in node.parts:
             saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
@@ -20,6 +24,9 @@ def find_specific_commands(node:bashlex.ast.node, commands_looking_for:list, sav
     return saved_command_dictionary
 
 def return_commands_from_variable_delcaraction(node:bashlex.ast.node):
+    """(node) strips the commands from a variable declaration if its of the form a=$(some command)\
+	returns a list of any commands found in the node"""
+    
     commands =  []
     if node.kind == 'assignment':
         for part in node.parts:

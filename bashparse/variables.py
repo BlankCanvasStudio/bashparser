@@ -4,15 +4,16 @@ import bashlex, copy
 
 
 def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_value:int, length_old_value:int):
-    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
-    if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
-    if type(length_new_value) is not int: raise ValueError('length_new_value must be an int')
-    if type(length_old_value) is not int: raise ValueError('length_old_value must be an int')
     # NOTE: Pass by reference
     # This function follows the path and replaces the pos of every node it touches
     # The nodes to the right of the nodes on the path, will also have their locations changed
     # We pass path = [-1] to the nodes to the right and then to all of its children
     # This causes the change to propagate through all affected nodes
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
+    if type(length_new_value) is not int: raise ValueError('length_new_value must be an int')
+    if type(length_old_value) is not int: raise ValueError('length_old_value must be an int')
+
     if path_to_update != [-1] and len(path_to_update):
         traversed = False
         orig_node = node
@@ -80,6 +81,8 @@ def update_command_substitution(node:bashlex.ast.node):
     
     
 def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
+    """(node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
+	returns an array of nodes, which make up all the possible options for all variable replacements"""
     # The name of the variable is store in node.value
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(paths) is not list: raise ValueError('paths must be a list')
@@ -136,8 +139,12 @@ def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
 
 
 def substitute_variables(node:bashlex.ast.node, var_list:dict):
+    """(node, variable list)  runs the whole gambit of finding all the variable locations, swapping them, and adjusting ast
+	returns an array of nodes which are all permutations of variable replacements possible within bash rules"""
+
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    
     replaced_nodes = []
 
     if node.kind == 'list':
@@ -184,7 +191,11 @@ def substitute_variables(node:bashlex.ast.node, var_list:dict):
 
 
 def add_var_to_var_list(var_list:dict, name:str, value:list): 
+    """(variable dict, name, value) Adds the corresponding name and value to dictionary. Planning on people misuing the dictionary
+	returns the updated variable dict"""
+
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    
     name = str(name)
     # We are only going to save things as arrays. This makes the unwrapping/replacing in the node structure easier
     if value is not None:
@@ -201,8 +212,11 @@ def add_var_to_var_list(var_list:dict, name:str, value:list):
 
 
 def update_variable_list(node:bashlex.ast.node, var_list:dict):
+    """(node, variable dict) strips any variables out of ast and saves them to variable list. Also saves mv x y for later use (could be separated)
+	returns an updated variable dict"""
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    
     if hasattr(node, 'parts') and len(node.parts):
         if node.parts[0].kind == 'assignment':
             name, value = node.parts[0].word.split('=', maxsplit=1)

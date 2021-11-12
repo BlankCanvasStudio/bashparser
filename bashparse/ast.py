@@ -3,6 +3,11 @@ import bashlex
 
 
 def shift_ast_pos(node:bashlex.ast.node, shift_amount):
+    """The pos variable identifies where in the parsed string a particular value is. if the string gets longer we need to adjust it (ie var repalcement)
+	shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
+	super nice use but necessary if you want to do massive work with the framework. 
+	returns the shifted tree (ie a bashlex.ast.node)"""
+    
     node.pos = (node.pos[0] + shift_amount, node.pos[1] + shift_amount)
     if hasattr(node, 'parts'): 
         for part in node.parts:
@@ -15,10 +20,16 @@ def shift_ast_pos(node:bashlex.ast.node, shift_amount):
 
 
 def shift_ast_pos_to_start(node:bashlex.ast.node):
-    return shift_ast_pos(node, node.pos[1])  # EZPZ
+	"""shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
+    
+    return shift_ast_pos(node, node.pos[1])
 
 
 def return_paths_to_node_type(node: bashlex.ast.node, current_path: list, paths: list, node_type:str):
+    """(node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
+	returns a list of path_variables to those nodes
+	if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function"""
+    
     if hasattr(node, 'parts') and len(node.parts): 
         for i in range(len(node.parts) - 1, -1, -1): paths = return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
         # We iterate inreverse order here because the first elements we replace should be the farthest to the right in the string
@@ -37,4 +48,7 @@ def return_paths_to_node_type(node: bashlex.ast.node, current_path: list, paths:
 
 
 def return_variable_paths(node: bashlex.ast.node, current_path: list, paths: list):
+    """(node, [], []) Return locs in ast where variables are. empty arrays cause recursion
+	returns array of path_variable objects which are used to locate variables"""
+    
     return return_paths_to_node_type(node, current_path, paths, 'parameter')
