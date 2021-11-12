@@ -53,3 +53,15 @@ def return_variable_paths(node, current_path, paths):
 	returns array of path_variable objects which are used to locate variables"""
     
     return return_paths_to_node_type(node, current_path, paths, 'parameter')
+
+def convert_tree_to_string(node):
+    command = None
+    if hasattr(node, 'parts'):
+        command = ""
+        for el in node.parts:
+            if el.kind == 'word': 
+                command += el.word + ' '
+            elif el.kind == 'redirect': 
+                command +=  el.type + ' ' + el.output.word + ' '
+        command = command[:-1]  # remove final space because thats wrong
+    return command
