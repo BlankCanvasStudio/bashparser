@@ -5,10 +5,9 @@ import bashlex
 class TestVariables(TestCase):
 
     def test_update_trees_pos(self):
-        self.assertRaises(ValueError, update_trees_pos, 'something', [], 0, 0)
-        self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], 'something', 0, 0)
-        self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], [], 'something', 0)
-        self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], [], 0, 'something')
+        self.assertRaises(ValueError, update_trees_pos, 'something', [], 0)
+        self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], 'something', 0)
+        self.assertRaises(ValueError, update_trees_pos, bashlex.parse('cd here')[0], [], 'something')
 
 
     def test_update_command_substitution(self):
@@ -39,8 +38,6 @@ class TestVariables(TestCase):
             "CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 11) word='testing=one')] pos=(0, 11))",
             "CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 11) word='testing=two')] pos=(0, 11))"
         ]
-        print(replaced_nodes)
-        print(result_string)
         self.assertTrue(result_string == replaced_nodes)
         # Verify that command substitutions and variable replacements in that command substitution work
         var_list = {'http_server':['dns.cyberium.cc']}
