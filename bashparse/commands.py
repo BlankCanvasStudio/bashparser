@@ -5,9 +5,14 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
 	This looks for given commands in an ast node. if it is a command then it gets saved to the dict
 	Returns the updated command dictionary"""
     
-    if node.kind == 'for' or node.kind == 'list' or node.kind == 'commandsubstitution':
+    if node.kind == 'for' or node.kind == 'list':
         for part in node.parts:
             saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
+    if node.kind == 'commandsubstitution':
+        if hasattr(node, 'parts'):
+            for part in node.parts:
+                saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
+        saved_command_dictionary = find_specific_commands(node.command, commands_looking_for, saved_command_dictionary, return_as_string)
     if node.kind == 'compound':
         for part in node.list:
             saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
