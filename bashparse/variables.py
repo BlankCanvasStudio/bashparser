@@ -160,7 +160,7 @@ def substitute_variables(node:bashlex.ast.node, var_list:dict):
                 for el in new_list:
                     var_list = update_variable_list(el, var_list)
             node.list = new_list
-            node.pos = (node.parts[0].pos[0], node.parts[-1].pos[1])
+            node.pos = (node.list[0].pos[0], node.list[-1].pos[1])
             replaced_nodes += [node]
     
     elif node.kind == 'command':
