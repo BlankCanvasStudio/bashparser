@@ -195,19 +195,18 @@ def add_var_to_var_list(var_list, name, value):
 	returns the updated variable dict"""
 
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
-    
     name = str(name)
+    
     # We are only going to save things as arrays. This makes the unwrapping/replacing in the node structure easier
     if value is not None:
+        if type(value) is not list: value = [str(value)]
         if name in var_list:  # The following section allows for if redifinitions without any problems. Covers more cases
             # Convert all values to strings because they should be
-            if type(value) is not list: value = [str(value)]
             for val in value:
-                if val not in var_list[name]:
+                if str(val) not in var_list[name]:
                     var_list[name] = var_list[name] + [str(val)]
         else: 
-            if type(value) is not list: var_list[name] = [str(value)]
-            else: var_list[name] = [str(x) for x in value]  # typecast every element to string just in case
+            var_list[name] = [str(x) for x in value]  # typecast every element to string just in case
     return var_list
 
 

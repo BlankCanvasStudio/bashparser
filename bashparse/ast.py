@@ -24,6 +24,7 @@ def shift_ast_pos_to_start(node):
     """shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
 
 
+# Make a version that only requires node and node_type
 def return_paths_to_node_type(node, current_path, paths, node_type):
     """(node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
 	returns a list of path_variables to those nodes
@@ -46,6 +47,7 @@ def return_paths_to_node_type(node, current_path, paths, node_type):
     return paths
 
 
+# Make a version that only requires node and node_type
 def return_variable_paths(node, current_path, paths):
     """(node, [], []) Return locs in ast where variables are. empty arrays cause recursion
 	returns array of path_variable objects which are used to locate variables"""

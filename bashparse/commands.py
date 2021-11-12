@@ -23,6 +23,7 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
                     saved_command_dictionary[node.parts[0].word] += [node]  
     return saved_command_dictionary
 
+
 def return_commands_from_variable_delcaraction(node):
     """(node) strips the commands from a variable declaration if its of the form a=$(some command)\
 	returns a list of any commands found in the node"""
@@ -36,3 +37,6 @@ def return_commands_from_variable_delcaraction(node):
         for part in node.parts:
             commands += return_commands_from_variable_delcaraction(part)
     return commands
+
+
+# Add function to pull all commands executed via a command substitution
