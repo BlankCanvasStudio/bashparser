@@ -8,7 +8,7 @@ bashparse is a python library containing a number of helpful tools to contextual
 
 ## Function Descriptions
 
-    - parse(str): A wrapper for bashlex.parse. Takes a string as an argument and returns an abstract syntax tree (a bashlex.ast.node object)
+- parse(str): A wrapper for bashlex.parse. Takes a string as an argument and returns an abstract syntax tree (a bashlex.ast.node object)
 
     - path_varaible: an object which holds a path, a node, which can be found at the end of that path, and an optional value field (used in this package when the node is a variable and has a corresponding value). 
     
