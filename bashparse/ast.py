@@ -2,11 +2,11 @@ from bashparse.path_variable import path_variable
 import bashlex
 
 
-def shift_ast_pos(node:bashlex.ast.node, shift_amount):
+def shift_ast_pos(node, shift_amount):
     """The pos variable identifies where in the parsed string a particular value is. if the string gets longer we need to adjust it (ie var repalcement)
-	shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
-	super nice use but necessary if you want to do massive work with the framework. 
-	returns the shifted tree (ie a bashlex.ast.node)"""
+    shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
+    super nice use but necessary if you want to do massive work with the framework. 
+    returns the shifted tree (ie a bashlex.ast.node)"""
     
     node.pos = (node.pos[0] + shift_amount, node.pos[1] + shift_amount)
     if hasattr(node, 'parts'): 
@@ -19,13 +19,12 @@ def shift_ast_pos(node:bashlex.ast.node, shift_amount):
     return node
 
 
-def shift_ast_pos_to_start(node:bashlex.ast.node):
-	"""shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
-    
+def shift_ast_pos_to_start(node):
     return shift_ast_pos(node, node.pos[1])
+    """shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
 
 
-def return_paths_to_node_type(node: bashlex.ast.node, current_path: list, paths: list, node_type:str):
+def return_paths_to_node_type(node, current_path, paths, node_type):
     """(node, [], [], node type looking for) Finds all the paths to nodes in ast which are of a certain kind. 
 	returns a list of path_variables to those nodes
 	if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function"""
@@ -47,7 +46,7 @@ def return_paths_to_node_type(node: bashlex.ast.node, current_path: list, paths:
     return paths
 
 
-def return_variable_paths(node: bashlex.ast.node, current_path: list, paths: list):
+def return_variable_paths(node, current_path, paths):
     """(node, [], []) Return locs in ast where variables are. empty arrays cause recursion
 	returns array of path_variable objects which are used to locate variables"""
     

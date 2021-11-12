@@ -3,7 +3,7 @@ from bashparse.ast import return_paths_to_node_type, return_variable_paths
 import bashlex, copy
 
 
-def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_value:int, length_old_value:int):
+def update_trees_pos(node, path_to_update, length_new_value, length_old_value):
     # NOTE: Pass by reference
     # This function follows the path and replaces the pos of every node it touches
     # The nodes to the right of the nodes on the path, will also have their locations changed
@@ -47,7 +47,7 @@ def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_valu
                 update_trees_pos(part, [-1], length_new_value, length_old_value)
 
 
-def update_command_substitution(node:bashlex.ast.node):
+def update_command_substitution(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     command_substitutions_paths = return_paths_to_node_type(node, [], [], 'commandsubstitution')
 
@@ -80,7 +80,7 @@ def update_command_substitution(node:bashlex.ast.node):
         node_to_update.word = node_to_update.word[:substitution_start] + new_command_string + node_to_update.word[substitution_end:]
     
     
-def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
+def replace_variables(node, paths, var_list):
     """(node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
 	returns an array of nodes, which make up all the possible options for all variable replacements"""
     # The name of the variable is store in node.value
@@ -138,7 +138,7 @@ def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
     return replaced_trees
 
 
-def substitute_variables(node:bashlex.ast.node, var_list:dict):
+def substitute_variables(node, var_list):
     """(node, variable list)  runs the whole gambit of finding all the variable locations, swapping them, and adjusting ast
 	returns an array of nodes which are all permutations of variable replacements possible within bash rules"""
 
@@ -190,7 +190,7 @@ def substitute_variables(node:bashlex.ast.node, var_list:dict):
     return replaced_nodes
 
 
-def add_var_to_var_list(var_list:dict, name:str, value:list): 
+def add_var_to_var_list(var_list, name, value): 
     """(variable dict, name, value) Adds the corresponding name and value to dictionary. Planning on people misuing the dictionary
 	returns the updated variable dict"""
 
@@ -211,7 +211,7 @@ def add_var_to_var_list(var_list:dict, name:str, value:list):
     return var_list
 
 
-def update_variable_list(node:bashlex.ast.node, var_list:dict):
+def update_variable_list(node, var_list):
     """(node, variable dict) strips any variables out of ast and saves them to variable list. Also saves mv x y for later use (could be separated)
 	returns an updated variable dict"""
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
@@ -251,7 +251,7 @@ def update_variable_list(node:bashlex.ast.node, var_list:dict):
     return var_list
 
 
-def update_var_list_with_for_loop(node:bashlex.ast.node, var_list:dict):
+def update_var_list_with_for_loop(node, var_list):
     # Verify that the node is a for loop of the format: for x in y
     if ( hasattr(node, 'parts') and len(node.parts) >= 3 and  
         hasattr(node.parts[0], 'word') and node.parts[0].word == 'for' and 
