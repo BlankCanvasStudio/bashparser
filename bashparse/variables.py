@@ -4,6 +4,10 @@ import bashlex, copy
 
 
 def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_value:int, length_old_value:int, name:str):
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
+    if type(length_new_value) is not int: raise ValueError('length_new_value must be an int')
+    if type(length_old_value) is not int: raise ValueError('length_old_value must be an int')
     # NOTE: Pass by reference
     # This function follows the path and replaces the pos of every node it touches
     # The nodes to the right of the nodes on the path, will also have their locations changed
@@ -44,6 +48,7 @@ def update_trees_pos(node:bashlex.ast.node, path_to_update:list, length_new_valu
 
 
 def update_command_substitution(node:bashlex.ast.node):
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     command_substitutions_paths = return_paths_to_node_type(node, [], [], 'commandsubstitution')
 
     for path_var in command_substitutions_paths:
@@ -77,6 +82,8 @@ def update_command_substitution(node:bashlex.ast.node):
     
 def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
     # The name of the variable is store in node.value
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
     unique_names = []
     unique_trees_needed = 1
     # Find how many unique trees we need to fit the entire replaced variable space
@@ -121,23 +128,40 @@ def replace_variables(node:bashlex.ast.node, paths:list, var_list:dict):
                     node_one_up.word = node_one_up.word[:variable_start] + path_val.value[j] + node_one_up.word[variable_end:]
                     if has_commandsubstitution:
                         update_command_substitution(node=replaced_trees[(i*len(path_val.value)) + j])
-                    print('replaced tree: ', replaced_trees[(i*len(path_val.value)) + j])
                     update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path[:-1], length_new_value=len(path_val.value[j]), length_old_value=variable_end - variable_start, name=path_val.node.value)
                     del node_one_up.parts[path_val.path[-1]]  # Remove parameter node because it has been replaced
     return replaced_trees
 
 
 def substitute_variables(node:bashlex.ast.node, var_list:dict):
-
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
     replaced_nodes = []
 
     if node.kind == 'list':
-        for part in node.parts:
-            replaced_nodes += substitute_variables(part, var_list)
-
+        # Might want this to return original list node, not the list of commands or maybe both
+        if len(node.parts):
+            new_parts = []
+            for part in node.parts:
+                new_nodes = substitute_variables(part, var_list)
+                new_parts += new_nodes
+                for el in new_nodes:
+                    var_list = update_variable_list(el, var_list)
+            node.parts = new_parts
+            node.pos = (node.parts[0].pos[0], node.parts[-1].pos[1])
+            replaced_nodes += [node]
     elif node.kind == 'compound':
-        for part in node.list:
-            replaced_nodes += substitute_variables(part, var_list)
+        # Might want this to return original compound node, not the list of commands or maybe both
+        if len(node.list):
+            new_list = []
+            for part in node.list:
+                new_list = substitute_variables(part, var_list)
+                new_list += new_list
+                for el in new_list:
+                    var_list = update_variable_list(el, var_list)
+            node.list = new_list
+            node.pos = (node.parts[0].pos[0], node.parts[-1].pos[1])
+            replaced_nodes += [node]
     
     elif node.kind == 'command':
         paths = return_variable_paths(node, [], [])
@@ -158,21 +182,25 @@ def substitute_variables(node:bashlex.ast.node, var_list:dict):
 
 
 def add_var_to_var_list(var_list:dict, name:str, value:list): 
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    name = str(name)
     # We are only going to save things as arrays. This makes the unwrapping/replacing in the node structure easier
     if value is not None:
         if name in var_list:  # The following section allows for if redifinitions without any problems. Covers more cases
-            if type(value) is not list: value = [value]
+            # Convert all values to strings because they should be
+            if type(value) is not list: value = [str(value)]
             for val in value:
                 if val not in var_list[name]:
-                    var_list[name] = var_list[name] + [val]
+                    var_list[name] = var_list[name] + [str(val)]
         else: 
-            if type(value) is not list: var_list[name] = [value]
-            else: var_list[name] = value
+            if type(value) is not list: var_list[name] = [str(value)]
+            else: var_list[name] = [str(x) for x in value]  # typecast every element to string just in case
     return var_list
 
 
 def update_variable_list(node:bashlex.ast.node, var_list:dict):
-
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
     if hasattr(node, 'parts') and len(node.parts):
         if node.parts[0].kind == 'assignment':
             name, value = node.parts[0].word.split('=', maxsplit=1)
@@ -188,9 +216,12 @@ def update_variable_list(node:bashlex.ast.node, var_list:dict):
                 mvd_cmd = node.parts[non_flag_base + 1]
                     # Generic remove everything before the '/' 
                     # IDK about readability when I can flex this hard
-                if '/' in orig_cmd[:orig_cmd.index(' ')]: orig_cmd = orig_cmd[orig_cmd[:orig_cmd.index(' ')].rfind('/') + 1:]
-                if '/' in mvd_cmd[:mvd_cmd.index(' ')]: mvd_cmd = mvd_cmd[mvd_cmd[:mvd_cmd.index(' ')].rfind('/') + 1:]
-
+                orig_cmd = node.parts[non_flag_base].word
+                mvd_cmd = node.parts[non_flag_base+1].word
+                # Need to redo this
+                # if '/' in orig_cmd[:orig_cmd.word.index(' ')]: orig_cmd = orig_cmd[orig_cmd[:orig_cmd.word.index(' ')].rfind('/') + 1:]
+                # if '/' in mvd_cmd[:mvd_cmd.word.index(' ')]: mvd_cmd = mvd_cmd[mvd_cmd[:mvd_cmd.word.index(' ')].rfind('/') + 1:]
+                if 'mv_list' not in var_list: var_list['mv_list'] = {}
                 if orig_cmd in var_list['mv_list']:  # This is to get around nesting
                     # If the cmd we are moving in already in the mv_list then it isn't the orginial cmd
                     # This intermediate command is useless so we save the one 1 level up. This meaqns the cmd
