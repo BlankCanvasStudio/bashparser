@@ -1,10 +1,17 @@
 import bashlex, copy
+from bashparse.ast import return_paths_to_node_type
 
 def find_specific_commands(node, commands_looking_for, saved_command_dictionary, return_as_string):
     """(node, list of commands you're looking for, dict to save commands into, bool if the nodes should be saved as strings (and not ast nodes))
 	This looks for given commands in an ast node. if it is a command then it gets saved to the dict
 	Returns the updated command dictionary"""
-    
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(commands_looking_for) is not list: raise ValueError('commands_looking_for must be a list')
+    for el in commands_looking_for:
+        if type(el) is not str: raise ValueError('elements of commands_looking_for must be strings')
+    if type(saved_command_dictionary) is not dict: raise ValueError('saved_command_dictionary must be a dictionary')
+    if type(return_as_string) is not bool: raise ValueError('return_as_string must be a bool')
+
     if node.kind == 'for' or node.kind == 'list':
         for part in node.parts:
             saved_command_dictionary = find_specific_commands(part, commands_looking_for, saved_command_dictionary, return_as_string)
@@ -37,28 +44,23 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
 def return_commands_from_variable_delcaraction(node):
     """(node) strips the commands from a variable declaration if its of the form a=$(some command)\
 	returns a list of any commands found in the node"""
-    
-    commands =  []
-    if node.kind == 'assignment':
-        for part in node.parts:
-            if part.kind == 'commandsubstitution': 
-                commands += [copy.deepcopy(part.command)]
-    if node.kind == 'command' and len(node.parts):
-        for part in node.parts:
-            commands += return_commands_from_variable_delcaraction(part)
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+
+    commands = []
+    assignments = return_paths_to_node_type(node, [], [], 'assignment')
+    for assignment in assignments:
+        command_substitutions = return_paths_to_node_type(assignment.node, [], [], 'commandsubstitution')
+        for substitution in command_substitutions:
+            commands += return_commands_from_command_substitutions(substitution.node)
+
     return commands
 
 
 # Add function to pull all commands executed via a command substitution
 def return_commands_from_command_substitutions(node):
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     commands = []
-    if hasattr(node, 'parts'): 
-        for part in node.parts:
-            commands += return_commands_from_command_substitutions(part)
-    if hasattr(node, 'command'): 
-        commands += return_commands_from_command_substitutions(node.command)
-        if node.kind == 'commandsubstitution':
-            commands += node.command
-    if hasattr(node, 'output'):   # some nodes are just pass through nodes
-        commands+=return_commands_from_command_substitutions(node.output)
+    command_substitutions = return_paths_to_node_type(node, [], [], 'commandsubstitution')
+    for substitution in command_substitutions:
+        commands += [substitution.node.command]
     return commands
