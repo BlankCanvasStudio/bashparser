@@ -20,8 +20,9 @@ def shift_ast_pos(node, shift_amount):
 
 
 def shift_ast_pos_to_start(node):
-    return shift_ast_pos(node, node.pos[1])
     """shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
+    return shift_ast_pos(node, -node.pos[0])
+
 
 
 # Make a version that only requires node and node_type
