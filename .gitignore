@@ -3,3 +3,7 @@ __pycache__
 bashparse.egg-info
 */bashparse.egg-info
 *.pyc
+*/testing.py
+*/testing.pyc
+testing.py
+testing.pyc
