@@ -12,6 +12,8 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
     if type(saved_command_dictionary) is not dict: raise ValueError('saved_command_dictionary must be a dictionary')
     if type(return_as_string) is not bool: raise ValueError('return_as_string must be a bool')
 
+    saved_command_dictionary = copy.deepcopy(saved_command_dictionary)  # preserve integrity of original dictionary
+
     command_paths = return_paths_to_node_type(node, 'command')
     for path in command_paths:
         command_node = path.node
@@ -20,10 +22,10 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
             if return_as_string:
                 command = convert_tree_to_string(command_node)
                 if command not in saved_command_dictionary[command_node.parts[0].word]:
-                    saved_command_dictionary[command_node.parts[0].word] = [command] + saved_command_dictionary[command_node.parts[0].word]
+                    saved_command_dictionary[command_node.parts[0].word] = [copy.deepcopy(command)] + saved_command_dictionary[command_node.parts[0].word]
             else:
                 if command_node not in saved_command_dictionary[command_node.parts[0].word]:
-                        saved_command_dictionary[command_node.parts[0].word] = [command_node] + saved_command_dictionary[command_node.parts[0].word]
+                        saved_command_dictionary[command_node.parts[0].word] = [copy.deepcopy(command_node)] + saved_command_dictionary[command_node.parts[0].word]
     return saved_command_dictionary
 
 
@@ -46,5 +48,5 @@ def return_commands_from_command_substitutions(node):
     commands = []
     command_substitutions = return_paths_to_node_type(node, 'commandsubstitution')
     for substitution in command_substitutions:
-        commands = [substitution.node.command] + commands
+        commands = [copy.deepcopy(substitution.node.command)] + commands  # pass by reference so need to copy to stay seperate
     return commands
