@@ -92,5 +92,16 @@ class TestVariables(TestCase):
 		results = return_commands_from_command_substitutions(nodes[0])
 		for i in range(0, len(results)):
 			self.assertTrue(expected_results[i] == str(results[i]))
+	
+	def test_return_commands_from_for_loops(self):
+		test_string = "for a in $n\n do\n echo this; echo that\n done"
+		node = bashlex.parse(test_string)[0]
+		expected_results = [ 
+			"CommandNode(parts=[WordNode(parts=[] pos=(17, 21) word='echo'), WordNode(parts=[] pos=(22, 26) word='this')] pos=(17, 26))", 
+			"CommandNode(parts=[WordNode(parts=[] pos=(28, 32) word='echo'), WordNode(parts=[] pos=(33, 37) word='that')] pos=(28, 37))"
+		]
+		results = return_commands_from_for_loops(node)
+		for i in range(0, len(expected_results)):
+			self.assertTrue(expected_results[i] == str(results[i]))
 
 
