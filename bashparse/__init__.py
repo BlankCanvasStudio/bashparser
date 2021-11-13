@@ -15,6 +15,8 @@ add_variables_to_var_list = variables.add_var_to_var_list
 	
 replace_variables = variables.replace_variables  
 
+find_and_replace_variables = variables.find_and_replace_variables
+
 
 node_level_regex = regex.node_level_regex
 

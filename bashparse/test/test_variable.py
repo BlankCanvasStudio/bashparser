@@ -146,6 +146,22 @@ class TestVariables(TestCase):
         for_node = bashlex.parse('for a in "$(echo this)"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {})
         self.assertTrue(new_var_list == {'a':['$(echo this)']})
+    
+    def test_find_and_replace_variables(self):
+        
+        test_node = "n='one two three';\n for a in $n\n do\n cd $a; done"
+        nodes = bashlex.parse(test_node)
+        replaced_nodes = find_and_replace_variables(nodes)
+        expected_results = [
+            "ListNode(parts=[CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 17) word='n=one two three')] pos=(0, 17)), OperatorNode(op=';' pos=(17, 18))] pos=(0, 18))",
+            "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 54) word='one')] pos=(48, 54)), OperatorNode(op=';' pos=(54, 55))] pos=(48, 55)), ReservedwordNode(pos=(56, 60) word='done')] pos=(20, 60)), ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 54) word='two')] pos=(48, 54)), OperatorNode(op=';' pos=(54, 55))] pos=(48, 55)), ReservedwordNode(pos=(56, 60) word='done')] pos=(20, 60)), ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 56) word='three')] pos=(48, 56)), OperatorNode(op=';' pos=(56, 57))] pos=(48, 57)), ReservedwordNode(pos=(58, 62) word='done')] pos=(20, 62)), ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 54) word='one')] pos=(48, 54)), OperatorNode(op=';' pos=(54, 55))] pos=(48, 55)), ReservedwordNode(pos=(56, 60) word='done')] pos=(20, 60)), ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 54) word='two')] pos=(48, 54)), OperatorNode(op=';' pos=(54, 55))] pos=(48, 55)), ReservedwordNode(pos=(56, 60) word='done')] pos=(20, 60)), ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 56) word='three')] pos=(48, 56)), OperatorNode(op=';' pos=(56, 57))] pos=(48, 57)), ReservedwordNode(pos=(58, 62) word='done')] pos=(20, 62))] pos=(20, 62) redirects=[])"
+        ]
+        for i in range(0, len(replaced_nodes)):
+            self.assertTrue(str(replaced_nodes[i]) == expected_results[i])
+        
+        replaced_nodes = find_and_replace_variables(nodes, {})
+        for i in range(0, len(replaced_nodes)):
+            self.assertTrue(str(replaced_nodes[i]) == expected_results[i])
 
 
 

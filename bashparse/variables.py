@@ -44,6 +44,7 @@ def update_trees_pos(node, path_to_update, delta):
             for i in range(path_to_update[0]+1, len(orig_node.list)):
                 shift_ast_pos(orig_node.list[i], delta)
 
+
 def update_command_substitution(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     command_substitutions_paths = return_paths_to_node_type(node, 'commandsubstitution')
@@ -79,17 +80,18 @@ def update_command_substitution(node):
         node_to_update.word = node_to_update.word[:substitution_start] + new_command_string + node_to_update.word[substitution_end:]
     
     
-def replace_variables(node, paths, var_list):
+def replace_variables(node_in, paths, var_list):
     """(node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
 	returns an array of nodes, which make up all the possible options for all variable replacements"""
     # The name of the variable is store in node.value
-    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(node_in) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(paths) is not list: raise ValueError('paths must be a list')
     for el in paths:
         if type(el) is not path_variable: raise ValueError('the elements of the paths list must be ints')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
     unique_names = []
     unique_trees_needed = 1
+    node = copy.deepcopy(node_in)  # Maintain integrity of passed in node cause passed by reference
     # Find how many unique trees we need to fit the entire replaced variable space
     for path_val in paths:
         if path_val.node.value in var_list:  # I decided to do the iteration here cause I need to count unique entries any way so I might as well do it in one step
@@ -139,14 +141,15 @@ def replace_variables(node, paths, var_list):
     return replaced_trees
 
 
-def substitute_variables(node, var_list):
+def substitute_variables(node_in, var_list):
     """(node, variable list)  runs the whole gambit of finding all the variable locations, swapping them, and adjusting ast
 	returns an array of nodes which are all permutations of variable replacements possible within bash rules"""
 
-    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(node_in) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
-    
+
     replaced_nodes = []
+    node = copy.deepcopy(node_in)  # This maintains the integrity of the node passed in cause its passed by ref
 
     if node.kind == 'list':
         # Might want this to return original list node, not the list of commands or maybe both
@@ -187,7 +190,7 @@ def substitute_variables(node, var_list):
         print("node was recieved that we don't have implementation to parse. Kind: ", node.kind)
         print('node: ', node)
 
-    if len(replaced_nodes) == 0: return [node]
+    if len(replaced_nodes) == 0: return [copy.deepcopy(node)]
     return replaced_nodes
 
 
@@ -280,3 +283,20 @@ def update_var_list_with_for_loop(node, var_list):
         var_list = add_var_to_var_list(var_list, name, variable_value)
 
     return var_list
+
+
+def find_and_replace_variables(nodes, var_list = {}):
+    if type(nodes) is not list: raise ValueError('nodes must be a list')
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('elements of nodes must be of type bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    to_return = []
+    for node in nodes: 
+        replaced_nodes = substitute_variables(node, var_list)
+        to_return += replaced_nodes
+        for part in replaced_nodes:
+            var_list = update_variable_list(part, var_list)
+    
+    return to_return
+
+
