@@ -22,6 +22,8 @@ node_level_regex = regex.node_level_regex
 
 
 find_specific_commands = commands.find_specific_commands
+
+find_specific_command = commands.find_specific_command
 	
 return_commands_from_variable_delcaraction = commands.return_commands_from_variable_delcaraction
 

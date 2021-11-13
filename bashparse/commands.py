@@ -1,7 +1,7 @@
 import bashlex, copy
 from bashparse.ast import return_paths_to_node_type, convert_tree_to_string
 
-def find_specific_commands(node, commands_looking_for, saved_command_dictionary, return_as_string):
+def find_specific_commands(node, commands_looking_for, saved_command_dictionary, return_as_strings):
     """(node, list of commands you're looking for, dict to save commands into, bool if the nodes should be saved as strings (and not ast nodes))
 	This looks for given commands in an ast node. if it is a command then it gets saved to the dict
 	Returns the updated command dictionary"""
@@ -10,7 +10,7 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
     for el in commands_looking_for:
         if type(el) is not str: raise ValueError('elements of commands_looking_for must be strings')
     if type(saved_command_dictionary) is not dict: raise ValueError('saved_command_dictionary must be a dictionary')
-    if type(return_as_string) is not bool: raise ValueError('return_as_string must be a bool')
+    if type(return_as_strings) is not bool: raise ValueError('return_as_string must be a bool')
 
     saved_command_dictionary = copy.deepcopy(saved_command_dictionary)  # preserve integrity of original dictionary
 
@@ -19,7 +19,7 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
         command_node = path.node
         if len(command_node.parts) and command_node.parts[0].word in commands_looking_for:
             if command_node.parts[0].word not in saved_command_dictionary: saved_command_dictionary[command_node.parts[0].word] = []
-            if return_as_string:
+            if return_as_strings:
                 command = convert_tree_to_string(command_node)
                 if command not in saved_command_dictionary[command_node.parts[0].word]:
                     saved_command_dictionary[command_node.parts[0].word] += [copy.deepcopy(command)] # + saved_command_dictionary[command_node.parts[0].word]
@@ -27,6 +27,11 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
                 if command_node not in saved_command_dictionary[command_node.parts[0].word]:
                         saved_command_dictionary[command_node.parts[0].word] += [copy.deepcopy(command_node)] # + saved_command_dictionary[command_node.parts[0].word]
     return saved_command_dictionary
+
+
+def find_specific_command(node, command, return_as_strings):
+    command_dict = find_specific_commands(node, [command], {command:[]}, return_as_strings)
+    return command_dict[command]
 
 
 def return_commands_from_variable_delcaraction(node):
