@@ -102,15 +102,20 @@ bashparse is a python library containing a number of helpful tools to contextual
     - Takes: node and regex to find
     - Returns: list of strings which match the regex
 
-- find_specific_commands(node: bashlex.ast.node, commands_looking_for: list of str, saved_command_dictionary: dict, return_as_string: bool): This function checks the ast for exections of commands listed in the commands_looking_for. If the command is found in the ast then its appended to an array as either a command node or the command string. This difference is specified using the return_as_string bool.
+- find_specific_commands(node: bashlex.ast.node, commands_looking_for: list of str, saved_command_dictionary: dict, return_as_strings: bool): This function checks the ast for exections of commands listed in the commands_looking_for. If the command is found in the ast then its appended to an array as either a command node or the command string. This difference is specified using the return_as_string bool.
     - Takes: node object, list of commands to look for (a list of strings), a dictionary to save the commands to, and a bool identifying if the commands should be saved as nodes or strings
     - Returns: the updated command dictionary
+- find_specific_command(node: bashlex.ast.node, command: str, return_as_strings: bool): This function traverses the given node to find any instances of a command being executed. 
+    - Takes: node object, command that you're looking for (as a string), and a boolean indicting if you want it to be returned as a string (True) or not (and have the nodes themselves be returned)
 - return_commands_from_variable_delcaraction(node: bashlex.ast.node): This function returns any commands that would be executed in a variable declaration via a command substitution. I.e. a=$(wget www.google.com).
     - Takes: node object
     - Returns: list of nodes
 - return_commands_from_command_substitutions(node: bashlex.ast.node): This function iterates through the ast to find any command substitutions and returns the commands these substitutions would be executing. 
     - Takes: node object
     - Returns: list of nodes
+- return_commands_from_for_loops(node: bashlex.ast.node): This function looks through node for any for loops and returns all the command nodes in the for loops it finds. 
+    - Takes: node object
+    - Returns: list of nodes   
 
 - shift_tree_pos(node:bashlex.ast.node, shift_amount:int): This takes a node and the amount to shift all the pos values by. This is used to shift a nodes to start at any given value, instead of its offset in the string. Returns the node with the updated pos values 
     - Takes: node object and the shift amount (int) 
@@ -118,12 +123,15 @@ bashparse is a python library containing a number of helpful tools to contextual
 - shift_tree_pos_to_start(node: bashlex.ast.node): Shifts a given node pos to starting at 0. A helpful wrapper of the above function. Returns the newly shifted node
     - Takes: node object
     - Returns: the shifted node object
-- return_paths_to_node_type(node:bashlex.ast.node, node_type: str): This function iterates through the given ast to find the location of all the nodes which are of kind node_type. It then returns a list of path_variables which can be used to identify and traverse to the given nodes. current_path and paths should be empty on initial call 
-    - Takes: node object and the node kind one is looking for (str)
-    - Returns: list of path variables to the corresponding nodes
 - return_variable_paths(node: bashlex.ast.node): This function is a helpful wrapper to the above function. Should be used to find all the varaibles used in the node. Returns a list of the path_variables which can be used to identify all the variables in the node.
     - Takes: node object
     - Returns: list of path variables to the variables
+- return_paths_to_node_type(node:bashlex.ast.node, node_type: str): This function iterates through the given ast to find the location of all the nodes which are of kind node_type. It then returns a list of path_variables which can be used to identify and traverse to the given nodes. current_path and paths should be empty on initial call 
+    - Takes: node object and the node kind one is looking for (str)
+    - Returns: list of path variables to the corresponding nodes
+- return_nodes_of_type(node: bashlex.ast.node, node_type: str): This function takes a node and a string of the node type one is looking for. This returns the nodes themselves, as opposed to path_variables.
+    - Takes: node object and string indicating type looking for
+    - Returns: list of node objects
 - convert_tree_to_string(node: bashlex.ast.node): This function converts the given ast back into a readable string. It will not exactly maintain the formatting (as \n is dropped in parsing) but it is correct and readable nonetheless.
     - Takes: node object
     - Returns: string
