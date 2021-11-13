@@ -22,10 +22,10 @@ def find_specific_commands(node, commands_looking_for, saved_command_dictionary,
             if return_as_string:
                 command = convert_tree_to_string(command_node)
                 if command not in saved_command_dictionary[command_node.parts[0].word]:
-                    saved_command_dictionary[command_node.parts[0].word] = [copy.deepcopy(command)] + saved_command_dictionary[command_node.parts[0].word]
+                    saved_command_dictionary[command_node.parts[0].word] += [copy.deepcopy(command)] # + saved_command_dictionary[command_node.parts[0].word]
             else:
                 if command_node not in saved_command_dictionary[command_node.parts[0].word]:
-                        saved_command_dictionary[command_node.parts[0].word] = [copy.deepcopy(command_node)] + saved_command_dictionary[command_node.parts[0].word]
+                        saved_command_dictionary[command_node.parts[0].word] += [copy.deepcopy(command_node)] # + saved_command_dictionary[command_node.parts[0].word]
     return saved_command_dictionary
 
 

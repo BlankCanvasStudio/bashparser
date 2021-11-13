@@ -35,12 +35,14 @@ def execute_return_paths_to_node_type(node, current_path, paths, node_type):
 	if you pass node type='parameter', it will find all the variables. the above find all variables is just convenient wrapper of this function"""
     
     if hasattr(node, 'parts') and len(node.parts): 
-        for i in range(len(node.parts) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
+        #for i in range(len(node.parts) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
+        for i in range(0, len(node.parts)): paths = execute_return_paths_to_node_type(node.parts[i], current_path + [i], paths, node_type)
         # We iterate inreverse order here because the first elements we replace should be the farthest to the right in the string
         # This is so that the indexing doesn't change as we do the variable replacements. Will add section to maintain pos but for now
         # this is done this way to be safe and in the event that pos is added, it will work just the same 
     if hasattr(node, 'list') and len(node.list):
-        for i in range(len(node.list) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.list[i], current_path + [i], paths, node_type)
+        # for i in range(len(node.list) - 1, -1, -1): paths = execute_return_paths_to_node_type(node.list[i], current_path + [i], paths, node_type)
+        for i in range(0, len(node.list)): paths = execute_return_paths_to_node_type(node.list[i], current_path + [i], paths, node_type)
     # If its a redirect node, call the replacement on the node its redirection to
     if node.kind == 'redirect' and hasattr(node, 'output'): paths = execute_return_paths_to_node_type(node.output, current_path, paths, node_type) 
     # If its a command node, call the replacement on the node its actually referencing
@@ -59,6 +61,14 @@ def return_paths_to_node_type(node, node_type):
 
 def return_variable_paths(node):
     return execute_return_paths_to_node_type(node, [], [], 'parameter')
+
+
+def return_nodes_of_type(node, node_type):
+    paths = execute_return_paths_to_node_type(node, [], [], node_type)
+    nodes = []
+    for path in paths:
+        nodes += [path.node]
+    return nodes
 
 
 def convert_tree_to_string(node):

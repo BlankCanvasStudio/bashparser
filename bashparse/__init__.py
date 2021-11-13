@@ -38,4 +38,6 @@ return_variable_paths = ast.return_variable_paths
 
 return_paths_to_node_type = ast.return_paths_to_node_type
 
+return_nodes_of_type = ast.return_nodes_of_type
+
 convert_tree_to_string = ast.convert_tree_to_string

@@ -47,7 +47,7 @@ def update_trees_pos(node, path_to_update, delta):
 
 def update_command_substitution(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
-    command_substitutions_paths = return_paths_to_node_type(node, 'commandsubstitution')
+    command_substitutions_paths = reversed(return_paths_to_node_type(node, 'commandsubstitution'))
 
     for path_var in command_substitutions_paths:
         command_node = node

@@ -35,15 +35,16 @@ class TestAst(TestCase):
 		nodes = bashlex.parse(node_string)
 		paths = return_paths_to_node_type(nodes[0], 'word')
 		expected_results = [
-			"path_var([0,5,4,1], WordNode(parts=[] pos=(44, 48) word='here'))", 
-			"path_var([0,5,4,0], WordNode(parts=[] pos=(41, 43) word='mv'))", 
-			"path_var([0,5,2,1], WordNode(parts=[] pos=(33, 38) word='there'))", 
-			"path_var([0,5,2,0], WordNode(parts=[] pos=(30, 32) word='cd'))", 
-			"path_var([0,5,0,1], WordNode(parts=[] pos=(23, 27) word='that'))", 
-			"path_var([0,5,0,0], WordNode(parts=[] pos=(18, 22) word='wget'))", 
+			"path_var([0,1], WordNode(parts=[] pos=(4, 5) word='a'))",
 			"path_var([0,3], WordNode(parts=[ParameterNode(pos=(9, 11) value='n')] pos=(9, 11) word='$n'))", 
-			"path_var([0,1], WordNode(parts=[] pos=(4, 5) word='a'))"
+			"path_var([0,5,0,0], WordNode(parts=[] pos=(18, 22) word='wget'))", 
+			"path_var([0,5,0,1], WordNode(parts=[] pos=(23, 27) word='that'))",
+			"path_var([0,5,2,0], WordNode(parts=[] pos=(30, 32) word='cd'))", 
+			"path_var([0,5,2,1], WordNode(parts=[] pos=(33, 38) word='there'))", 
+			"path_var([0,5,4,0], WordNode(parts=[] pos=(41, 43) word='mv'))",
+			"path_var([0,5,4,1], WordNode(parts=[] pos=(44, 48) word='here'))", 
 		]
+		
 		for i in range(0, len(paths)):
 			self.assertTrue(str(paths[i]) == expected_results[i])
 		
@@ -53,8 +54,8 @@ class TestAst(TestCase):
 		nodes = bashlex.parse(node_string)
 		paths = return_variable_paths(nodes[0])
 		expected_results = [
-			"path_var([0,5,4,1,0], ParameterNode(pos=(44, 49) value='else'))", 
-			"path_var([0,3,0], ParameterNode(pos=(9, 11) value='n'))"
+			"path_var([0,3,0], ParameterNode(pos=(9, 11) value='n'))",
+			"path_var([0,5,4,1,0], ParameterNode(pos=(44, 49) value='else'))" 
 		]
 		for i in range(0, len(paths)):
 			self.assertTrue(str(paths[i]) == expected_results[i])
