@@ -79,8 +79,36 @@ def update_command_substitution(node):
         # Lets do that update 
         node_to_update.word = node_to_update.word[:substitution_start] + new_command_string + node_to_update.word[substitution_end:]
     
+
+def replace_variables_using_paths(nodes, paths, var_list):
+    new_paths = paths
+
+    if type(paths) is not list: raise ValueError('paths must be a list')
+    for el in paths:
+        if type(el) is not path_variable: raise ValueError('the elements of the paths list must be ints')
+    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    if type(nodes) is not list:
+        nodes = [nodes]
+        new_paths = copy.deepcopy(paths)
+        for path in new_paths:
+            path.path = [0] + path.path
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be of type bashlex.ast.node')
     
-def replace_variables_using_paths(node_in, paths, var_list):
+
+    replaced_trees = []
+    for i in range(0, len(nodes)):
+        paths_to_use = []
+        for path in new_paths:
+            if path.path[0] == i:
+                path_to_add = copy.deepcopy(path)
+                path_to_add.path = path_to_add.path[1:]
+                paths_to_use += [path_to_add]
+        replaced_trees += execute_replace_variables_using_paths(nodes[i], paths_to_use, var_list)
+
+    return replaced_trees
+    
+def execute_replace_variables_using_paths(node_in, paths, var_list):
     """(node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
 	returns an array of nodes, which make up all the possible options for all variable replacements"""
     # The name of the variable is store in node.value
@@ -141,7 +169,17 @@ def replace_variables_using_paths(node_in, paths, var_list):
     return replaced_trees
 
 
-def substitute_variables(node_in, var_list):
+def substitute_variables(nodes, var_list):
+    if type(nodes) is not list: nodes = [nodes]
+    for node in nodes: 
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    replaced_nodes = []
+    for node in nodes:
+        replaced_nodes += execute_substitute_variables(node, var_list)
+    return replaced_nodes
+
+
+def execute_substitute_variables(node_in, var_list):
     """(node, variable list)  runs the whole gambit of finding all the variable locations, swapping them, and adjusting ast
 	returns an array of nodes which are all permutations of variable replacements possible within bash rules"""
 
@@ -214,7 +252,17 @@ def add_variable_to_list(var_list, name, value):
     return var_list
 
 
-def update_variable_list_with_node(node, var_list):
+def update_variable_list_with_node(nodes, var_list):
+    if type(nodes) is not list: nodes = [nodes]
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be dictionary')
+    for node in nodes:
+        var_list = execute_update_variable_list_with_node(node, var_list)
+    return var_list
+
+
+def execute_update_variable_list_with_node(node, var_list):
     """(node, variable dict) strips any variables out of ast and saves them to variable list. Also saves mv x y for later use (could be separated)
 	returns an updated variable dict"""
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
@@ -286,9 +334,7 @@ def update_var_list_with_for_loop(node, var_list):
 
 
 def find_and_replace_variables(nodes, var_list = {}):
-    if type(nodes) is not list: 
-        if type(nodes) is not bashlex.ast.node: raise ValueError('nodes must be a list or bashlex.ast.node')
-        else: nodes = [nodes]
+    if type(nodes) is not list: nodes = [nodes]
     for node in nodes:
         if type(node) is not bashlex.ast.node: raise ValueError('elements of nodes must be of type bashlex.ast.node')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')

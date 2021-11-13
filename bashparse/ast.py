@@ -2,29 +2,39 @@ from bashparse.path_variable import path_variable
 import bashlex
 
 
-def shift_ast_pos(node, shift_amount):
+def shift_ast_pos(nodes, shift_amount):
     """The pos variable identifies where in the parsed string a particular value is. if the string gets longer we need to adjust it (ie var repalcement)
     shifts all the positions in an ast by a given value. Only useful if ast before this one gets x longer or shorter (happens on variable repalcement)
     super nice use but necessary if you want to do massive work with the framework. 
     returns the shifted tree (ie a bashlex.ast.node)"""
-    
-    node.pos = (node.pos[0] + shift_amount, node.pos[1] + shift_amount)
-    if hasattr(node, 'parts'): 
-        for part in node.parts:
-            shift_ast_pos(part, shift_amount) 
-    if hasattr(node, 'list'):
-        for part in node.list:
-            shift_ast_pos(part, shift_amount)
-    if hasattr(node, 'command'):  # some nodes are just pass through nodes
-        shift_ast_pos(node.command, shift_amount)
-    if hasattr(node, 'output'):   # some nodes are just pass through nodes
-        shift_ast_pos(node.output, shift_amount)
-    return node
+    if type(nodes) is not list: nodes = [nodes]
+    for el in nodes:
+        if type(el) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    for node in nodes:
+        node.pos = (node.pos[0] + shift_amount, node.pos[1] + shift_amount)
+        if hasattr(node, 'parts'): 
+            for part in node.parts:
+                shift_ast_pos(part, shift_amount) 
+        if hasattr(node, 'list'):
+            for part in node.list:
+                shift_ast_pos(part, shift_amount)
+        if hasattr(node, 'command'):  # some nodes are just pass through nodes
+            shift_ast_pos(node.command, shift_amount)
+        if hasattr(node, 'output'):   # some nodes are just pass through nodes
+            shift_ast_pos(node.output, shift_amount)
+    return nodes
 
 
-def shift_ast_pos_to_start(node):
+def shift_ast_pos_to_start(nodes):
     """shifts the pos variable so that it starts a 0. just a userful wrapper of the above class"""
-    return shift_ast_pos(node, -node.pos[0])
+    if type(nodes) is not list: nodes = [nodes]
+    for el in nodes:
+        if type(el) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    shifted_nodes = []
+    shift_amount = nodes[0].pos[0]
+    for node in nodes:
+        shifted_nodes += shift_ast_pos(node, -shift_amount)
+    return shifted_nodes
 
 
 
@@ -51,16 +61,33 @@ def execute_return_paths_to_node_type(node, current_path, paths, node_type):
     return paths
 
 
-def return_paths_to_node_type(node, node_type):
-    return execute_return_paths_to_node_type(node, [], [], node_type)
+def return_paths_to_node_type(nodes, node_type):
+    if type(nodes) is not list: nodes = [nodes]
+    for el in nodes:
+        if type(el) is not bashlex.ast.node: raise ValueError('nodes msut be a bashlex.ast.node')
+    paths = []
+    if len(nodes) > 1:
+        for i in range(0, len(nodes)):
+            paths += execute_return_paths_to_node_type(nodes[i], [i], [], node_type)
+    elif len(nodes) == 1:
+        paths = execute_return_paths_to_node_type(nodes[0], [], [], node_type)
+    return paths
 
 
-def return_variable_paths(node):
-    return execute_return_paths_to_node_type(node, [], [], 'parameter')
+def return_variable_paths(nodes):
+    if type(nodes) is not list: nodes = [nodes]
+    for el in nodes:
+        if type(el) is not bashlex.ast.node: raise ValueError('nodes msut be a bashlex.ast.node')
+    return return_paths_to_node_type(nodes, 'parameter')
 
 
-def return_nodes_of_type(node, node_type):
-    paths = execute_return_paths_to_node_type(node, [], [], node_type)
+def return_nodes_of_type(nodes, node_type):
+    if type(nodes) is not list: nodes = [nodes]
+    for el in nodes:
+        if type(el) is not bashlex.ast.node: raise ValueError('nodes msut be a bashlex.ast.node')
+    if type(node_type) is not str: raise ValueError('node_type must be a string')
+    
+    paths = return_paths_to_node_type(nodes, node_type)
     nodes = []
     for path in paths:
         nodes += [path.node]
