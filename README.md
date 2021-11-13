@@ -6,6 +6,74 @@ bashparse is a python library containing a number of helpful tools to contextual
 
     This package only depends on bashlex
 
+## Usage
+    
+    Lets assume that you'd like to get all the commands executed from the following bash script:
+        n="/tmp /var /etc"
+        for a in $n
+        do
+            cd $a
+            touch somefile.txt
+        done
+    
+    We want to unroll this loop, replace all the variables, and return these commands as strings. 
+    
+    To do this we can do the following:
+    
+        import bashparse
+        bash_text = 'n="/tmp /var /etc"\n for a in $n \n do \n cd $a \n touch somefile.txt \n done'
+        nodes = bashparse.parse(bash_text)  # Parse the text
+        replaced_nodes = bashparse.find_and_replace_variables(nodes)  # Make the variable substitutions
+        commands_executed = []
+        for node in replaced_nodes:  # Get all the command nodes from the replaced code
+            commands_executed += bashparse.return_nodes_of_type(node, 'command')  
+            # Get all the commands executed from newly replaced nodes
+        for command in commands_executed:  # Print the command nodes as string
+            print(bashparse.convert_tree_to_string(command))
+            # print the found commands as string
+    
+    This will return the following output:
+    
+        n=/tmp /var /etc
+        touch somefile.txt
+        cd /etc
+        touch somefile.txt
+        cd /var
+        touch somefile.txt
+        cd /tmp
+        touch somefile.txt
+        cd /etc
+        touch somefile.txt
+        cd /var
+        touch somefile.txt
+        cd /tmp
+    
+    Which is easily seen to be the code actually executed by the script, in the order that its displayed.
+    
+    One could easily find all the directories the script tries to enter using the following code:
+        
+        import bashparse
+        bash_text = 'n="/tmp /var /etc"\n for a in $n \n do \n cd $a \n touch somefile.txt \n done'
+        nodes = bashparse.parse(bash_text)  # Parse the text
+        replaced_nodes = bashparse.find_and_replace_variables(nodes)  # Make the variable substitutions
+        commands_executed = []
+        cds_executed = []
+        for node in replaced_nodes:  # Get all the command nodes from the replaced code
+                commands_executed += bashparse.return_nodes_of_type(node, 'command')  
+                # Get all the commands executed from newly replaced nodes
+        for command in commands_executed:  # Print the command nodes as string
+                cds_executed += bashparse.find_specific_command(command, 'cd', True)
+                cds_executed = list(set(cds_executed))
+        for cd_node in cds_executed:
+                print(cd_node)
+    
+    Which would return the output:
+    
+        cd /var
+        cd /tmp
+        cd /etc
+    
+    
 ## Function Descriptions
 
 - parse(str): A wrapper for bashlex.parse. 
