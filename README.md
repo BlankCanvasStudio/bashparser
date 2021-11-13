@@ -63,7 +63,7 @@ One could easily find all the directories the script tries to enter using the fo
             commands_executed += bashparse.return_nodes_of_type(node, 'command')  
             # Get all the commands executed from newly replaced nodes
     for command in commands_executed:  # Print the command nodes as string
-            cds_executed += bashparse.find_specific_command(command, 'cd', True)
+            cds_executed += bashparse.find_specific_command(command, 'cd', return_as_strings=True)
             cds_executed = list(set(cds_executed))
     for cd_node in cds_executed:
             print(cd_node)
