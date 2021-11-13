@@ -7,13 +7,13 @@ parse = bashlex.parse
 path_variable = path_variable.path_variable
 
 
-update_variable_list = variables.update_variable_list  
+update_variable_list_with_node = variables.update_variable_list_with_node  
 
 substitute_variables = variables.substitute_variables  
 	
-add_variables_to_var_list = variables.add_var_to_var_list
+add_variable_to_list = variables.add_variable_to_list
 	
-replace_variables = variables.replace_variables  
+replace_variables_using_paths = variables.replace_variables_using_paths  
 
 find_and_replace_variables = variables.find_and_replace_variables
 
@@ -25,7 +25,7 @@ find_specific_commands = commands.find_specific_commands
 	
 return_commands_from_variable_delcaraction = commands.return_commands_from_variable_delcaraction
 
-return_commands_from_command_substitutions = commands.return_commands_from_command_substitutions # Add doc & test
+return_commands_from_command_substitutions = commands.return_commands_from_command_substitutions
 
 
 shift_tree_pos = ast.shift_ast_pos
@@ -36,4 +36,4 @@ return_variable_paths = ast.return_variable_paths
 
 return_paths_to_node_type = ast.return_paths_to_node_type
 
-convert_tree_to_string = ast.convert_tree_to_string # Add doc & test
+convert_tree_to_string = ast.convert_tree_to_string

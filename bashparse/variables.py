@@ -80,7 +80,7 @@ def update_command_substitution(node):
         node_to_update.word = node_to_update.word[:substitution_start] + new_command_string + node_to_update.word[substitution_end:]
     
     
-def replace_variables(node_in, paths, var_list):
+def replace_variables_using_paths(node_in, paths, var_list):
     """(node, paths to variables to replace, variable dict)  Swaps the variables in 2nd arg with their values and fixes ast accordingly
 	returns an array of nodes, which make up all the possible options for all variable replacements"""
     # The name of the variable is store in node.value
@@ -159,7 +159,7 @@ def substitute_variables(node_in, var_list):
                 new_nodes = substitute_variables(part, var_list)
                 new_parts += new_nodes
                 for el in new_nodes:
-                    var_list = update_variable_list(el, var_list)
+                    var_list = update_variable_list_with_node(el, var_list)
             node.parts = new_parts
             node.pos = (node.parts[0].pos[0], node.parts[-1].pos[1])
             replaced_nodes += [node]
@@ -171,20 +171,20 @@ def substitute_variables(node_in, var_list):
                 new_list = substitute_variables(part, var_list)
                 new_list += new_list
                 for el in new_list:
-                    var_list = update_variable_list(el, var_list)
+                    var_list = update_variable_list_with_node(el, var_list)
             node.list = new_list
             node.pos = (node.list[0].pos[0], node.list[-1].pos[1])
             replaced_nodes += [node]
     
     elif node.kind == 'command':
         paths = return_variable_paths(node)
-        new_nodes = replace_variables(node, paths, var_list)
+        new_nodes = replace_variables_using_paths(node, paths, var_list)
         replaced_nodes += new_nodes  
     
     elif node.kind == 'for': 
         var_list = update_var_list_with_for_loop(node, var_list)  # This is so that we can use the for loop iterator to replace stuff later
         paths = return_variable_paths(node)
-        replaced_nodes += replace_variables(node, paths, var_list) 
+        replaced_nodes += replace_variables_using_paths(node, paths, var_list) 
 
     elif node.kind != 'pipeline' and node.kind != 'operator' and node.kind != 'word':
         print("node was recieved that we don't have implementation to parse. Kind: ", node.kind)
@@ -194,7 +194,7 @@ def substitute_variables(node_in, var_list):
     return replaced_nodes
 
 
-def add_var_to_var_list(var_list, name, value): 
+def add_variable_to_list(var_list, name, value): 
     """(variable dict, name, value) Adds the corresponding name and value to dictionary. Planning on people misuing the dictionary
 	returns the updated variable dict"""
 
@@ -214,7 +214,7 @@ def add_var_to_var_list(var_list, name, value):
     return var_list
 
 
-def update_variable_list(node, var_list):
+def update_variable_list_with_node(node, var_list):
     """(node, variable dict) strips any variables out of ast and saves them to variable list. Also saves mv x y for later use (could be separated)
 	returns an updated variable dict"""
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
@@ -223,7 +223,7 @@ def update_variable_list(node, var_list):
     if hasattr(node, 'parts') and len(node.parts):
         if node.parts[0].kind == 'assignment':
             name, value = node.parts[0].word.split('=', maxsplit=1)
-            var_list = add_var_to_var_list(var_list, name, value)
+            var_list = add_variable_to_list(var_list, name, value)
         elif node.parts[0].kind == 'word' and node.parts[0].word == 'mv':
             # Move index to past the flagss
             non_flag_base = 1
@@ -280,13 +280,15 @@ def update_var_list_with_for_loop(node, var_list):
                 # If there is a single value, which contains spaces and isn't a command substitution then bash is going to interpret this as an array
                 variable_value = variable_value[0].split(' ') 
             
-        var_list = add_var_to_var_list(var_list, name, variable_value)
+        var_list = add_variable_to_list(var_list, name, variable_value)
 
     return var_list
 
 
 def find_and_replace_variables(nodes, var_list = {}):
-    if type(nodes) is not list: raise ValueError('nodes must be a list')
+    if type(nodes) is not list: 
+        if type(nodes) is not bashlex.ast.node: raise ValueError('nodes must be a list or bashlex.ast.node')
+        else: nodes = [nodes]
     for node in nodes:
         if type(node) is not bashlex.ast.node: raise ValueError('elements of nodes must be of type bashlex.ast.node')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
@@ -295,7 +297,7 @@ def find_and_replace_variables(nodes, var_list = {}):
         replaced_nodes = substitute_variables(node, var_list)
         to_return += replaced_nodes
         for part in replaced_nodes:
-            var_list = update_variable_list(part, var_list)
+            var_list = update_variable_list_with_node(part, var_list)
     
     return to_return
 

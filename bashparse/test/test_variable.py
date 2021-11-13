@@ -14,10 +14,10 @@ class TestVariables(TestCase):
         self.assertRaises(ValueError, update_command_substitution, 'something')
     
 
-    def test_replace_variables(self):
-        self.assertRaises(ValueError, replace_variables, 'something', [], {})
-        self.assertRaises(ValueError, replace_variables, bashlex.parse('cd here')[0], 'something', {})
-        self.assertRaises(ValueError, replace_variables, bashlex.parse('cd here')[0], [], [])
+    def test_replace_variables_using_paths(self):
+        self.assertRaises(ValueError, replace_variables_using_paths, 'something', [], {})
+        self.assertRaises(ValueError, replace_variables_using_paths, bashlex.parse('cd here')[0], 'something', {})
+        self.assertRaises(ValueError, replace_variables_using_paths, bashlex.parse('cd here')[0], [], [])
     
 
     def test_substitute_variables(self):
@@ -76,52 +76,52 @@ class TestVariables(TestCase):
         self.assertTrue(replaced_nodes == result_strings)
         
 
-    def test_add_var_to_var_list(self):
+    def test_add_variable_to_list(self):
         # Enforce that var_list is a dict
-        self.assertRaises(ValueError, add_var_to_var_list, [], 'something', [1, 2, 3])
+        self.assertRaises(ValueError, add_variable_to_list, [], 'something', [1, 2, 3])
         # Make sure that adding entries works if value is not not a string
         new_var_list = {}
-        new_var_list = add_var_to_var_list(new_var_list, 'name1', 1)
+        new_var_list = add_variable_to_list(new_var_list, 'name1', 1)
         self.assertTrue(new_var_list == {'name1':['1']})
         # Make sure that adding entries works if value is an array of not string, 
         new_var_list = {}
-        new_var_list = add_var_to_var_list(new_var_list, 'name1', [1, 2])
+        new_var_list = add_variable_to_list(new_var_list, 'name1', [1, 2])
         self.assertTrue(new_var_list == {'name1':['1', '2']})
         # Make sure that adding entries works if value is str but not list
         new_var_list = {}
-        new_var_list = add_var_to_var_list(new_var_list, 'name1', 'value1')
+        new_var_list = add_variable_to_list(new_var_list, 'name1', 'value1')
         self.assertTrue(new_var_list == {'name1':['value1']})
         # Make sure adding non-list values works
-        new_var_list = add_var_to_var_list(new_var_list, 'name1', 'value2')
+        new_var_list = add_variable_to_list(new_var_list, 'name1', 'value2')
         self.assertTrue(new_var_list == {'name1':['value1', 'value2']})
         # Make sure that adding list values works
-        new_var_list = add_var_to_var_list(new_var_list, 'name1', ['value3', 'value4', 'value5'])
+        new_var_list = add_variable_to_list(new_var_list, 'name1', ['value3', 'value4', 'value5'])
         self.assertTrue(new_var_list == {'name1':['value1', 'value2', 'value3', 'value4', 'value5']})
     
 
-    def test_update_variable_list(self):
+    def test_update_variable_list_with_node(self):
         node = bashlex.parse('a=b')[0]
-        self.assertRaises(ValueError, update_variable_list, 'anything', {})
-        self.assertRaises(ValueError, update_variable_list, node, [])
+        self.assertRaises(ValueError, update_variable_list_with_node, 'anything', {})
+        self.assertRaises(ValueError, update_variable_list_with_node, node, [])
         # Test that the mv moves get stored
         mv_node = bashlex.parse('mv one two')[0]
-        new_var_list = update_variable_list(mv_node, {})
+        new_var_list = update_variable_list_with_node(mv_node, {})
         self.assertTrue(new_var_list == {'mv_list':{'two':'one'}})  # Note that it should add mv_list automatically
         # Test that flags get ignored in the mv case
         mv_node = bashlex.parse('mv -f -q one two')[0]
-        new_var_list = update_variable_list(mv_node, {})
+        new_var_list = update_variable_list_with_node(mv_node, {})
         self.assertTrue(new_var_list == {'mv_list':{'two':'one'}})  # Note that it should add mv_list automatically
         # Test basic assignment gets saved
         mv_node = bashlex.parse('a=b')[0]
-        new_var_list = update_variable_list(mv_node, {})
+        new_var_list = update_variable_list_with_node(mv_node, {})
         self.assertTrue(new_var_list == {'a':['b']})  # Note that it should add mv_list automatically
         # Test command substitution assignment works fine
         mv_node = bashlex.parse('a=$(echo this)')[0]
-        new_var_list = update_variable_list(mv_node, {})
+        new_var_list = update_variable_list_with_node(mv_node, {})
         self.assertTrue(new_var_list == {'a':['$(echo this)']})  # Note that it should add mv_list automatically
         # Test that for loops work
         for_node = bashlex.parse('for a in "one two three"\n do\n echo something\n done')[0].list[0]
-        new_var_list = update_variable_list(for_node, {})
+        new_var_list = update_variable_list_with_node(for_node, {})
         self.assertTrue(new_var_list == {'a':['one', 'two', 'three']})
         # Test for loops work with variable replacement
         for_node = bashlex.parse('for a in "$n"\n do\n echo something\n done')[0].list[0]
@@ -136,7 +136,7 @@ class TestVariables(TestCase):
     def test_update_var_list_with_for_loop(self):
         # Test that for loops work
         for_node = bashlex.parse('for a in "one two three"\n do\n echo something\n done')[0].list[0]
-        new_var_list = update_variable_list(for_node, {})
+        new_var_list = update_variable_list_with_node(for_node, {})
         self.assertTrue(new_var_list == {'a':['one', 'two', 'three']})
         # Test for loops work with variable replacement
         for_node = bashlex.parse('for a in "$n"\n do\n echo something\n done')[0].list[0]
