@@ -59,5 +59,5 @@ def return_commands_from_for_loops(node):
     for loop in for_loops:
         command_nodes = return_paths_to_node_type(loop.node, 'command')
         for command in command_nodes:
-            commands = [copy.deepcopy(command.node)] + commands
+            commands += [copy.deepcopy(command.node)]
     return commands
