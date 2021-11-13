@@ -28,6 +28,7 @@ bashparse is a python library containing a number of helpful tools to contextual
     - Returns: list of nodes
 - find_and_replace_variables(nodes: list/bashlex.ast.node, var_list (optional): This function finds and replaces all the variables in the list. If the list contains variable assignments as well, the var_list will be updated to reflect this and replacements will also include these new values. The function assumes the code is executing in the list's order. So if an assignment happens after the reference, the reference will NOT be given the assigned value.
     - Takes: list of nodes or single node object and optionally a variable dictionary
+    - Returns: a list of node objects will all possible variable replacements
     
 - node_level_regex(node: bashlex.ast.node, regex:r"str"): This traverse every node in the ast and checks if part of the word matches the regex. If it does, the matching regex is added to a list, which is returned.        
     - Takes: node and regex to find
@@ -37,6 +38,9 @@ bashparse is a python library containing a number of helpful tools to contextual
     - Takes: node object, list of commands to look for (a list of strings), a dictionary to save the commands to, and a bool identifying if the commands should be saved as nodes or strings
     - Returns: the updated command dictionary
 - return_commands_from_variable_delcaraction(node: bashlex.ast.node): This function returns any commands that would be executed in a variable declaration via a command substitution. I.e. a=$(wget www.google.com).
+    - Takes: node object
+    - Returns: list of nodes
+- return_commands_from_command_substitutions(node: bashlex.ast.node): This function iterates through the ast to find any command substitutions and returns the commands these substitutions would be executing. 
     - Takes: node object
     - Returns: list of nodes
 
