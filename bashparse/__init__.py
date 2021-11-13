@@ -27,6 +27,8 @@ return_commands_from_variable_delcaraction = commands.return_commands_from_varia
 
 return_commands_from_command_substitutions = commands.return_commands_from_command_substitutions
 
+return_commands_from_for_loops = commands.return_commands_from_for_loops
+
 
 shift_tree_pos = ast.shift_ast_pos
 	

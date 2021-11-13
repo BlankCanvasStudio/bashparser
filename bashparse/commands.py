@@ -50,3 +50,15 @@ def return_commands_from_command_substitutions(node):
     for substitution in command_substitutions:
         commands = [copy.deepcopy(substitution.node.command)] + commands  # pass by reference so need to copy to stay seperate
     return commands
+
+
+def return_commands_from_for_loops(node):
+    if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
+    commands = []
+    for_loops = return_paths_to_node_type(node, 'for')
+    for loop in for_loops:
+        print(loop.node)
+        command_nodes = return_paths_to_node_type(loop.node, 'command')
+        for command in command_nodes:
+            commands = [copy.deepcopy(command.node)] + commands
+    return commands
