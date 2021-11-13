@@ -12,6 +12,9 @@ def shift_ast_pos(node, shift_amount):
     if hasattr(node, 'parts'): 
         for part in node.parts:
             shift_ast_pos(part, shift_amount) 
+    if hasattr(node, 'list'):
+        for part in node.list:
+            shift_ast_pos(part, shift_amount)
     if hasattr(node, 'command'):  # some nodes are just pass through nodes
         shift_ast_pos(node.command, shift_amount)
     if hasattr(node, 'output'):   # some nodes are just pass through nodes
@@ -72,4 +75,3 @@ def convert_tree_to_string(node):
     if hasattr(node, 'word'): command += node.word + ' ' # Parameters have values and should be ignore
     
     return command[:-1]  # Remove the extra space at end cause its wrong
-    

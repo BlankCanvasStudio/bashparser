@@ -1,5 +1,5 @@
 from bashparse.path_variable import path_variable
-from bashparse.ast import return_paths_to_node_type, return_variable_paths
+from bashparse.ast import return_paths_to_node_type, return_variable_paths, shift_ast_pos
 import bashlex, copy
 
 
@@ -19,10 +19,15 @@ def update_trees_pos(node, path_to_update, delta):
         orig_node = node
         while not traversed:
             if hasattr(node, 'parts'): 
-                    traversed = True
-                    node.pos = ( node.pos[0], node.pos[1] + delta )
-                    if len(node.parts):
-                        node = node.parts[path_to_update[0]]
+                traversed = True
+                node.pos = ( node.pos[0], node.pos[1] + delta )
+                if len(node.parts):
+                    node = node.parts[path_to_update[0]]
+            elif hasattr(node, 'list'):
+                traversed = True
+                node.pos = ( node.pos[0], node.pos[1] + delta )
+                if len(node.list):
+                    node = node.list[path_to_update[0]]
             elif hasattr(node, 'command'):  # some nodes are just pass through nodes
                     node.pos = ( node.pos[0], node.pos[1] + delta )
                     node = node.command
@@ -34,18 +39,10 @@ def update_trees_pos(node, path_to_update, delta):
         update_trees_pos(node, path_to_update[1:], delta)
         if hasattr(orig_node, 'parts'):
             for i in range(path_to_update[0] + 1, len(orig_node.parts)):
-                update_trees_pos(orig_node.parts[i], [-1], delta)
-    
-    if path_to_update == [-1]:
-        node.pos = ( node.pos[0] + delta, node.pos[1] + delta)
-        if hasattr(node, 'command'):  # some nodes are just pass through nodes
-            node = node.command
-        if hasattr(node, 'output'):   # some nodes are just pass through nodes
-            node = node.output
-        if hasattr(node, 'parts'):
-            for part in node.parts:
-                update_trees_pos(part, [-1], delta)
-
+                shift_ast_pos(orig_node.parts[i], delta)
+        if hasattr(orig_node, 'list'):
+            for i in range(path_to_update[0]+1, len(orig_node.list)):
+                shift_ast_pos(orig_node.list[i], delta)
 
 def update_command_substitution(node):
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashlex.ast.node')
@@ -62,6 +59,8 @@ def update_command_substitution(node):
             commandsubstitution_node = command_node
             if hasattr(command_node, 'parts'): 
                 command_node = command_node.parts[point]
+            if hasattr(command_node, 'list'):
+                command_node = command_node.list[point]
             if hasattr(command_node, 'command'):  # some nodes are just pass through nodes
                 commandsubstitution_node = command_node  # This needs to be updated here cause we don't wanna only save if we change via parts
                 command_node = command_node.command
@@ -119,6 +118,8 @@ def replace_variables(node, paths, var_list):
                     for point in path_val.path:  # Dive down tree until we get to node we actually need to replace
                         node_one_up = node_to_replace
                         if hasattr(node_to_replace, 'parts'): 
+                            node_to_replace = node_to_replace.parts[point]
+                        if hasattr(node_to_replace, 'list'):
                             node_to_replace = node_to_replace.parts[point]
                         if hasattr(node_to_replace, 'command'):  # some nodes are just pass through nodes
                             if node_to_replace.kind == 'commandsubstitution':  
