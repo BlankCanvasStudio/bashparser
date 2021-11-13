@@ -59,13 +59,17 @@ def return_variable_paths(node):
 
 
 def convert_tree_to_string(node):
-    command = None
+    command = ""
     if hasattr(node, 'parts'):
-        command = ""
-        for el in node.parts:
-            if el.kind == 'word': 
-                command += el.word + ' '
-            elif el.kind == 'redirect': 
-                command +=  el.type + ' ' + el.output.word + ' '
-        command = command[:-1]  # remove final space because thats wrong
-    return command
+        for part in node.parts: 
+            if part.kind != 'parameter':
+                command += convert_tree_to_string(part) + ' '
+    elif hasattr(node, 'list'):
+        for part in node.list:
+            command += convert_tree_to_string(part) + ' '
+    if node.kind == 'operator':
+        command += node.op + ' '
+    if hasattr(node, 'word'): command += node.word + ' ' # Parameters have values and should be ignore
+    
+    return command[:-1]  # Remove the extra space at end cause its wrong
+    
