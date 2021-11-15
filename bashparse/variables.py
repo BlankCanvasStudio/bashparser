@@ -138,6 +138,23 @@ def replace_variables_using_paths(nodes, paths, var_list):
                         # Find the location in the string that we actually need to replace and replace with with the var
                         variable_start = node_to_replace.pos[0] - node_one_up.pos[0]
                         variable_end = node_to_replace.pos[1] - node_one_up.pos[0]
+                        # The above isn't technically correct, as there could be quotes which wouldn't be saved but affect the location so we adopt this as a starting point
+                        # And use the following alg to determine the real starting point
+                        print(node_one_up.word[variable_start:variable_end])
+                        print(path_val.node)
+                        #print('$'+path_val.node.word)
+                        found_var = node_one_up.word[variable_start:variable_end] == '$'+path_val.node.value
+                        while not found_var and variable_start >= 0:
+                            variable_start -= 1
+                            variable_end -= 1
+                            found_var = node_one_up.word[variable_start:variable_end] == '$'+path_val.node.value
+                        if  not found_var:
+                            variable_start = node_to_replace.pos[0] - node_one_up.pos[0]
+                            variable_end = node_to_replace.pos[1] - node_one_up.pos[0]
+                        while not found_var and variable_end < len(node_one_up.word):
+                            variable_start += 1
+                            variable_end += 1
+                            found_var = node_one_up.word[variable_start:variable_end] == '$'+path_val.node.value
                         node_one_up.word = node_one_up.word[:variable_start] + path_val.value[j] + node_one_up.word[variable_end:]
                         if has_commandsubstitution:
                             update_command_substitution(node=replaced_trees[(i*len(path_val.value)) + j])
