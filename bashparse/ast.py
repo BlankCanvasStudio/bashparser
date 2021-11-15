@@ -12,6 +12,7 @@ def shift_ast_pos(nodes, shift_amount):
         if type(el) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
     for node in nodes:
         node.pos = (node.pos[0] + shift_amount, node.pos[1] + shift_amount)
+        # bashlex.ast.posshifter(shift_amount).visitnode(node)  # While this tenchnically works, its a lot more overhead
         if hasattr(node, 'parts'): 
             for part in node.parts:
                 shift_ast_pos(part, shift_amount) 
@@ -105,7 +106,9 @@ def convert_tree_to_string(node):
             command += convert_tree_to_string(part) + ' '
     if node.kind == 'operator':
         command += node.op + ' '
-    if hasattr(node, 'word'): command += node.word + ' ' # Parameters have values and should be ignore
+    if hasattr(node, 'word'): 
+        if ' ' in node.word: command += '"' + node.word + '"' + ' ' # Add quotes correctly
+        else: command += node.word + ' ' # Parameters have values and should be ignore
     
     return command[:-1]  # Remove the extra space at end cause its wrong
 

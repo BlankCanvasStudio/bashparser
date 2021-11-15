@@ -3,6 +3,8 @@ import bashlex
 
 parse = bashlex.parse
 
+node = bashlex.ast.node
+
 
 path_variable = path_variable.path_variable
 
