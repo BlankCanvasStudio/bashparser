@@ -31,6 +31,12 @@ return_commands_from_command_substitutions = commands.return_commands_from_comma
 
 return_commands_from_for_loops = commands.return_commands_from_for_loops
 
+return_command_aliasing = commands.return_command_aliasing
+
+replace_command_aliasing = commands.replace_command_aliasing
+
+resolve_command_aliasing = commands.resolve_command_aliasing
+
 
 shift_tree_pos = ast.shift_ast_pos
 	
