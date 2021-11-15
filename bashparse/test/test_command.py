@@ -104,4 +104,40 @@ class TestVariables(TestCase):
 		for i in range(0, len(expected_results)):
 			self.assertTrue(expected_results[i] == str(results[i]))
 
-
+	def test_return_command_aliasing(self):
+		# Test that the mv moves get stored
+		mv_node = bashlex.parse('mv one two')[0]
+		cmd_alias_list = return_command_aliasing(mv_node, {})
+		self.assertTrue(cmd_alias_list == {'two':'one'})  # Note that it should add mv_list automatically
+        # Test that flags get ignored in the mv case
+		mv_node = bashlex.parse('mv -f -q one two')[0]
+		cmd_alias_list = return_command_aliasing(mv_node, {})
+		self.assertTrue(cmd_alias_list == {'two':'one'})  # Note that it should add mv_list automatically
+		# Test that the cmd without the / get added to
+		mv_node = bashlex.parse('mv -f -q /usr/bin/one /usr/bin/two')[0]
+		cmd_alias_list = return_command_aliasing(mv_node, {})
+		self.assertTrue(cmd_alias_list == {'/usr/bin/two': '/usr/bin/one', 'two': 'one'})  # Note that it should add mv_list automatically
+		# Test that the replacement works as well with the / involved
+		mv_node = bashlex.parse('/usr/bin/two arguments')[0]
+		replaced_node = replace_command_aliasing(mv_node, cmd_alias_list)
+		expected_result = "CommandNode(parts=[WordNode(parts=[] pos=(0, 12) word='/usr/bin/one'), WordNode(parts=[] pos=(13, 22) word='arguments')] pos=(0, 22))"
+		self.assertTrue(expected_result == str(replaced_node[0]))
+		# Test that it works with arrays
+		mv_node = [ bashlex.parse('/usr/bin/two arguments')[0], bashlex.parse('two arguments2')[0] ]
+		replaced_node = replace_command_aliasing(mv_node, cmd_alias_list)
+		replaced_node = [str(x) for x in replaced_node]
+		expected_result = [
+			"CommandNode(parts=[WordNode(parts=[] pos=(0, 12) word='/usr/bin/one'), WordNode(parts=[] pos=(13, 22) word='arguments')] pos=(0, 22))", 
+			"CommandNode(parts=[WordNode(parts=[] pos=(0, 3) word='one'), WordNode(parts=[] pos=(4, 14) word='arguments2')] pos=(0, 14))"
+		]
+		self.assertTrue(expected_result == replaced_node) 
+		# Test resolve node using the stuff above
+		expected_result = [
+			"CommandNode(parts=[WordNode(parts=[] pos=(0, 2) word='mv'), WordNode(parts=[] pos=(3, 15) word='/usr/bin/one'), WordNode(parts=[] pos=(16, 28) word='/usr/bin/two')] pos=(0, 28))", 
+			"CommandNode(parts=[WordNode(parts=[] pos=(0, 12) word='/usr/bin/one'), WordNode(parts=[] pos=(13, 22) word='arguments')] pos=(0, 22))", 
+			"CommandNode(parts=[WordNode(parts=[] pos=(0, 3) word='one'), WordNode(parts=[] pos=(4, 14) word='arguments2')] pos=(0, 14))"
+		]
+		mv_node = bashlex.parse('mv /usr/bin/one /usr/bin/two') + mv_node
+		replaced_node = resolve_command_aliasing(mv_node, {})
+		replaced_node = [str(x) for x in replaced_node]
+		self.assertTrue(expected_result == replaced_node)

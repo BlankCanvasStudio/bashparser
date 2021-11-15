@@ -83,3 +83,60 @@ def return_commands_from_for_loops(nodes):
             for command in command_nodes:
                 commands += [copy.deepcopy(command.node)]
     return commands
+
+
+def return_command_aliasing(nodes, command_alias_list = {}):
+    if type(nodes) is not list: nodes = [nodes]
+    for node in nodes: 
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    if type(command_alias_list) is not dict: raise ValueError('command_alias_list must be a dictionary')
+    for node in nodes:
+        command_nodes = return_paths_to_node_type(node, 'command')
+        for command in command_nodes:
+            if len(command.node.parts) > 2 and ( command.node.parts[0].word == 'mv' or command.node.parts[0].word == 'cp' ):
+                non_flag_base = 1
+                while non_flag_base + 1 < len(command.node.parts) and command.node.parts[non_flag_base].word[0] == '-':
+                    non_flag_base += 1
+                if command.node.parts[non_flag_base].word in command_alias_list:
+                    command.node.parts[non_flag_base].word = command_alias_list[command.node.parts[non_flag_base].word]
+                command_alias_list[command.node.parts[non_flag_base + 1].word] = command.node.parts[non_flag_base].word
+                if '/' in command.node.parts[non_flag_base].word: command.node.parts[non_flag_base].word = command.node.parts[non_flag_base].word.split('/')[-1]
+                if '/' in command.node.parts[non_flag_base + 1].word: command.node.parts[non_flag_base + 1].word = command.node.parts[non_flag_base + 1].word.split('/')[-1]
+                command_alias_list[command.node.parts[non_flag_base + 1].word] = command.node.parts[non_flag_base].word
+    
+    return command_alias_list
+
+
+def replace_command_aliasing(nodes, command_alias_list = {}):
+    if type(nodes) is not list: nodes = [nodes]
+    for node in nodes: 
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    if type(command_alias_list) is not dict: raise ValueError('command_alias_list must be a dictionary')
+    
+    to_return = []
+    for node in nodes:
+        current_node = copy.deepcopy(node)
+        command_nodes = return_paths_to_node_type(current_node, 'command')
+        for command in command_nodes:
+            if len(command.node.parts) and command.node.parts[0].word in command_alias_list:
+                current_node.parts[0].word = command_alias_list[command.node.parts[0].word] 
+        to_return += [ current_node ]
+    
+    return to_return
+
+
+def resolve_command_aliasing(nodes, command_alias_list={}):
+    if type(nodes) is not list: nodes = [nodes]
+    for node in nodes: 
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
+    if type(command_alias_list) is not dict: raise ValueError('command_alias_list must be a dictionary')
+
+    command_alias_list = {}
+    unaliased_commands = []
+    for node in nodes:
+        command_alias_list = return_command_aliasing(node, command_alias_list)
+        unaliased_commands += replace_command_aliasing(node, command_alias_list)
+    
+    return unaliased_commands
+
+

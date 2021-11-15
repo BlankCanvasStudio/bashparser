@@ -38,8 +38,6 @@ class TestAst(TestCase):
 		]
 		for i in range(0, len(expected_results)):
 			self.assertTrue(str(new_tree[i]) == expected_results[i])
-		# self.assertTrue(len(new_tree) == 1)
-		# self.assertTrue(expected_result == str(new_tree[0]))
 	
 	def test_execute_return_paths_to_node_type(self):
 		# Test execute_return_paths_to_node_type
@@ -68,7 +66,7 @@ class TestAst(TestCase):
 		
 		for i in range(0, len(paths)):
 			self.assertTrue(str(paths[i]) == expected_results[i])
-		
+			
 	def test_return_variable_paths(self):
 		# Test return_variable_paths
 		node_string = "for a in $n\n do\n  wget that;\n cd there;\n mv $else;\na=b;\n done" 
