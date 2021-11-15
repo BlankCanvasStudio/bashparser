@@ -135,3 +135,4 @@ Which would return the output:
 - **convert_tree_to_string(node: bashlex.ast.node):** This function converts the given ast back into a readable string. It will not exactly maintain the formatting (as \n is dropped in parsing) but it is correct and readable nonetheless.
     - Takes: node object
     - Returns: string
+- **return_node_at_path(bashlex.ast.node, path_variable or list of ints):** This function naivgates the ast down the path specified in the path argument. It then returns the actual node at that location, rather than a copy as is the case with a lot of other functions in this package.
