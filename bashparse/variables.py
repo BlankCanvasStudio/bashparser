@@ -140,9 +140,6 @@ def replace_variables_using_paths(nodes, paths, var_list):
                         variable_end = node_to_replace.pos[1] - node_one_up.pos[0]
                         # The above isn't technically correct, as there could be quotes which wouldn't be saved but affect the location so we adopt this as a starting point
                         # And use the following alg to determine the real starting point
-                        print(node_one_up.word[variable_start:variable_end])
-                        print(path_val.node)
-                        #print('$'+path_val.node.word)
                         found_var = node_one_up.word[variable_start:variable_end] == '$'+path_val.node.value
                         while not found_var and variable_start >= 0:
                             variable_start -= 1
