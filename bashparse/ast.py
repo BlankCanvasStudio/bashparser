@@ -108,3 +108,20 @@ def convert_tree_to_string(node):
     if hasattr(node, 'word'): command += node.word + ' ' # Parameters have values and should be ignore
     
     return command[:-1]  # Remove the extra space at end cause its wrong
+
+
+def return_node_at_path(node, path):
+    if type(path) == path_variable: path = path.path 
+    if type(path) is not list: raise ValueError('path must be a list')
+    for el in path:
+        if type(el) is not int: raise ValueError('elements of path list must be ints')
+    
+    if path == []: return node
+    else:
+        if hasattr(node, 'parts') and len(node.parts): return return_node_at_path(node.parts[path[0]], path[1:])
+        
+        elif hasattr(node, 'list') and len(node.list): return return_node_at_path(node.list[path[0]], path[1:])
+        
+        if node.kind == 'redirect' and hasattr(node, 'output'): return return_node_at_path(node.output, path)
+
+        if hasattr(node, 'command'): return return_node_at_path(node.command, path)

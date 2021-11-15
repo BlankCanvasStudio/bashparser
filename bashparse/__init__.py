@@ -49,3 +49,5 @@ return_paths_to_node_type = ast.return_paths_to_node_type
 return_nodes_of_type = ast.return_nodes_of_type
 
 convert_tree_to_string = ast.convert_tree_to_string
+
+return_node_at_path = ast.return_node_at_path

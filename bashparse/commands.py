@@ -1,5 +1,5 @@
 import bashlex, copy
-from bashparse.ast import return_paths_to_node_type, convert_tree_to_string
+from bashparse.ast import return_paths_to_node_type, convert_tree_to_string, return_node_at_path
 
 def find_specific_commands(nodes, commands_looking_for, saved_command_dictionary, return_as_strings):
     """(node, list of commands you're looking for, dict to save commands into, bool if the nodes should be saved as strings (and not ast nodes))
@@ -115,12 +115,13 @@ def replace_command_aliasing(nodes, command_alias_list = {}):
     
     to_return = []
     for node in nodes:
-        current_node = copy.deepcopy(node)
-        command_nodes = return_paths_to_node_type(current_node, 'command')
+        top_level_node = copy.deepcopy(node)
+        command_nodes = return_paths_to_node_type(top_level_node, 'command')
         for command in command_nodes:
-            if len(command.node.parts) and command.node.parts[0].word in command_alias_list:
-                current_node.parts[0].word = command_alias_list[command.node.parts[0].word] 
-        to_return += [ current_node ]
+            current_node = return_node_at_path(top_level_node, command.path)
+            if len(current_node.parts) and command.node.parts[0].word in command_alias_list:
+                current_node.parts[0].word = command_alias_list[current_node.parts[0].word] 
+        to_return += [ top_level_node ]
     
     return to_return
 
