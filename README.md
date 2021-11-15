@@ -107,6 +107,15 @@ Which would return the output:
 - **return_commands_from_for_loops(node: bashlex.ast.node):** This function looks through node(s) for any for loops and returns all the command nodes in the for loops it finds. 
     - Takes: node object
     - Returns: list of nodes   
+- **return_command_aliasing(bashlex.ast.node / list, dict):** This function iterates through all the node provided and notes any time a file gets move from one location to another. If a file is moved, its saved to the dictionary so that you an index by the new file name and recieve the old file name. It saves both the full path and just thee file name
+    - Takes: node object and an optional list of command aliases as a dict
+    - Returns: An updated list of command aliases as a dict
+- **replace_command_aliasing(bashlex.ast.node / list, dict):** This function gathers every command in the nodes provided and if the execute an aliased command which is stored in the command_alias_list dict, then it replaces it with the unaliased command name 
+    - Takes: node object and an optional list of command aliases as a dict
+    - Returns: a list of node objects with their aliased commands resolved   
+- **resolve_command_aliasing(bashlex.ast.node / list, dict):** This function does the job of the above 2 functions in 1 step
+    - Takes: node object and an optional list of command aliases as a dict
+    - Returns: a list of node objects with their aliased commands resolved 
 
 - **shift_tree_pos(node:bashlex.ast.node / list, shift_amount:int):** This takes node or a list of nodes and the amount to shift all the pos values by. This is used to shift the nodes pos by any given value, instead of its offset in the string. Returns the node with the updated pos values 
     - Takes: node object and the shift amount (int) 
