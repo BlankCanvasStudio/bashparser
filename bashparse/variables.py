@@ -198,8 +198,13 @@ def substitute_variables(nodes, var_list):
                         break
                 if assignment_moved: assignment_nodes = assignment_nodes[1:]
                 elif variable_moved: variable_nodes = variable_nodes[1:]
-                else: # If neither flips true then they have equal paths so we want to do variable repalcement first
-                    assignment_variables_in_order += [ variable_nodes[0], assignment_nodes[0] ]
+                else:
+                    if len(assignment_nodes[0].path) < len(variable_nodes[0].path):
+                        assignment_variables_in_order += [ variable_nodes[0], assignment_nodes[0] ]
+                    elif len(variable_nodes[0].path) < len(assignment_nodes[0].path):
+                        assignment_nodes = assignment_nodes[1:]
+                    else:
+                        assignment_variables_in_order += [ variable_nodes[0], assignment_nodes[0] ]
                     assignment_nodes = assignment_nodes[1:]
                     variable_nodes = variable_nodes[1:]
             assignment_variables_in_order += variable_nodes
@@ -222,10 +227,13 @@ def substitute_variables(nodes, var_list):
                         break
                 if assignment_moved: assignment_variables_in_order = assignment_variables_in_order[1:]
                 elif for_moved: for_nodes = for_nodes[1:]
-                else: # If neither flips true then they have equal paths so we want to do variable repalcement first
-                    action_paths += [ assignment_variables_in_order[0], for_nodes[0] ]
-                    assignment_variables_in_order = assignment_variables_in_order[1:]
-                    for_nodes = for_nodes[1:]
+                else:
+                    if len(assignment_variables_in_order[0].path) < len(for_nodes[0].path):
+                        action_paths += [ assignment_variables_in_order[0], for_nodes[0] ]
+                    elif len(for_nodes[0].path) < len(assignment_variables_in_order[0].path):
+                        action_paths += [ for_nodes[0], assignment_variables_in_order[0] ]
+                assignment_variables_in_order = assignment_variables_in_order[1:]
+                for_nodes = for_nodes[1:]
             action_paths += assignment_variables_in_order
             action_paths += for_nodes
 
@@ -245,6 +253,14 @@ def substitute_variables(nodes, var_list):
                     replaced_nodes = replace_variables_using_paths(replaced_nodes, paths, var_list)
                 elif action_paths[i].node.kind == 'for':
                     var_list = update_var_list_with_for_loop(action_paths[i].node, var_list)
+                    paths = []
+                    
+                    while i < len(action_paths):
+                        if action_paths[i].path[0:len(action_paths[i].path)] == action_paths[i].path:
+                            paths += [ action_paths[i] ]
+                            i += 1
+                    replaced_nodes = replace_variables_using_paths(replaced_nodes, paths[1:], var_list)
+                    # replaced_nodes = replace_variables_using_paths(replaced_nodes, action_paths[i], var_list)
                     i += 1
 
         if len(replaced_nodes) == 0: return [copy.deepcopy(node)]

@@ -23,7 +23,17 @@ class TestVariables(TestCase):
     def test_substitute_variables(self):
         self.assertRaises(ValueError, substitute_variables, 'something', {})
         self.assertRaises(ValueError, substitute_variables, bashlex.parse('cd here')[0], [])
-
+        # Testing for loops iterating over string, not variable
+        test_str = 'for a in "one two three"\n do\n localgo\n cd $a\n done'
+        for_node = bashlex.parse(test_str)[0]
+        expected_results = [
+            "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(0, 3) word='for'), WordNode(parts=[] pos=(4, 5) word='a'), ReservedwordNode(pos=(6, 8) word='in'), WordNode(parts=[] pos=(9, 24) word='one two three'), ReservedwordNode(pos=(26, 28) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(30, 37) word='localgo')] pos=(30, 37)), OperatorNode(op='\\n' pos=(37, 38)), CommandNode(parts=[WordNode(parts=[] pos=(39, 41) word='cd'), WordNode(parts=[] pos=(42, 45) word='one')] pos=(39, 45)), OperatorNode(op='\\n' pos=(45, 46))] pos=(30, 46)), ReservedwordNode(pos=(47, 51) word='done')] pos=(0, 51))] pos=(0, 51) redirects=[])",
+            "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(0, 3) word='for'), WordNode(parts=[] pos=(4, 5) word='a'), ReservedwordNode(pos=(6, 8) word='in'), WordNode(parts=[] pos=(9, 24) word='one two three'), ReservedwordNode(pos=(26, 28) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(30, 37) word='localgo')] pos=(30, 37)), OperatorNode(op='\\n' pos=(37, 38)), CommandNode(parts=[WordNode(parts=[] pos=(39, 41) word='cd'), WordNode(parts=[] pos=(42, 45) word='two')] pos=(39, 45)), OperatorNode(op='\\n' pos=(45, 46))] pos=(30, 46)), ReservedwordNode(pos=(47, 51) word='done')] pos=(0, 51))] pos=(0, 51) redirects=[])", 
+            "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(0, 3) word='for'), WordNode(parts=[] pos=(4, 5) word='a'), ReservedwordNode(pos=(6, 8) word='in'), WordNode(parts=[] pos=(9, 24) word='one two three'), ReservedwordNode(pos=(26, 28) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(30, 37) word='localgo')] pos=(30, 37)), OperatorNode(op='\\n' pos=(37, 38)), CommandNode(parts=[WordNode(parts=[] pos=(39, 41) word='cd'), WordNode(parts=[] pos=(42, 47) word='three')] pos=(39, 47)), OperatorNode(op='\\n' pos=(47, 48))] pos=(30, 48)), ReservedwordNode(pos=(49, 53) word='done')] pos=(0, 53))] pos=(0, 53) redirects=[])"
+        ]
+        replaced_nodes = substitute_variables(for_node, {})
+        replaced_nodes = [str(x) for x in replaced_nodes]
+        self.assertTrue(expected_results == replaced_nodes)
 
     def test_variable_replacement_functions(self):
         # This code actually tests substitute_variables, update_trees_pos, update_command_substitution, and replace variables
@@ -138,6 +148,8 @@ class TestVariables(TestCase):
         for_node = bashlex.parse('for a in "$(echo this)"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {})
         self.assertTrue(new_var_list == {'a':['$(echo this)']})
+        # Testing iterating over str, not variable
+
     
     def test_find_and_replace_variables(self):
         
