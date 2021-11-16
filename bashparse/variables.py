@@ -260,8 +260,7 @@ def substitute_variables(nodes, var_list):
                             if action_paths[i].node.kind == 'parameter':
                                 paths += [ action_paths[i] ]
                             i += 1
-                    replaced_nodes = replace_variables_using_paths(replaced_nodes, paths[1:], var_list)
-                    # replaced_nodes = replace_variables_using_paths(replaced_nodes, action_paths[i], var_list)
+                    replaced_nodes = replace_variables_using_paths(replaced_nodes, paths, var_list)
                     i += 1
 
         if len(replaced_nodes) == 0: return [copy.deepcopy(node)]
