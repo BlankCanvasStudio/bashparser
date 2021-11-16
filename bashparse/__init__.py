@@ -1,4 +1,4 @@
-from bashparse import variables, commands, regex, ast, path_variable
+from bashparse import variables, commands, regex, ast, path_variable, functions
 import bashlex
 
 parse = bashlex.parse
@@ -53,3 +53,8 @@ return_nodes_of_type = ast.return_nodes_of_type
 convert_tree_to_string = ast.convert_tree_to_string
 
 return_node_at_path = ast.return_node_at_path
+
+
+build_function_dictionary = functions.build_function_dictionary
+
+replace_functions = functions.replace_functions
