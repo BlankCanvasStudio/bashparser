@@ -30,7 +30,6 @@ def replace_functions(nodes, function_dictionary={}):
 	
 	for node in nodes:
 		commands = return_paths_to_node_type(node, 'command')
-		print('commands: ', commands)
 		for command in commands:
 			if len(command.node.parts) and command.node.parts[0].word in function_dictionary:
 				command_node = return_node_at_path(node, command.path[:-1])
