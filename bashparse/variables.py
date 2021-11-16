@@ -257,7 +257,8 @@ def substitute_variables(nodes, var_list):
                     
                     while i < len(action_paths):
                         if action_paths[i].path[0:len(action_paths[i].path)] == action_paths[i].path:
-                            paths += [ action_paths[i] ]
+                            if action_paths[i].node.kind == 'parameter':
+                                paths += [ action_paths[i] ]
                             i += 1
                     replaced_nodes = replace_variables_using_paths(replaced_nodes, paths[1:], var_list)
                     # replaced_nodes = replace_variables_using_paths(replaced_nodes, action_paths[i], var_list)
@@ -324,25 +325,30 @@ def update_var_list_with_for_loop(nodes, var_list):
                 hasattr(node.parts[2], 'word') and node.parts[2].word == 'in'  ) :
                     
                 name = node.parts[1].word
-                value_node = node.parts[3]
-                variable_value = [value_node.word]  # Give it a default value and change if necessary
+                value_index = 3
+                variable_value = []
+                value_nodes = []
+                while value_index < len(node.parts) and node.parts[value_index].word != ';' and node.parts[value_index].word !='do':
+                    variable_value += [ node.parts[value_index].word ]
+                    value_nodes += [ node.parts[value_index] ]
+                    value_index += 1 
 
-                if len(value_node.parts) and value_node.parts[0].kind == 'parameter' and value_node.parts[0].value in var_list:  
-                    # This means its a variable declaration and the variable value exists, so we are gonna repalce it 
-                    # If the value doesn't exist we leave it as $var. Useful for things like $1
-                    variable_value = var_list[value_node.parts[0].value]
-                
-                if len(variable_value) == 1 and type(variable_value[0]) == str and ' ' in variable_value[0]:
-                    if len(value_node.parts):  # Theres a chance its a command substitution, which means splitting on spaces is bad so we verify it isn't one
-                        if value_node.parts[0].kind == 'commandsubstitution': 
-                            value_node = substitute_variables(value_node, var_list)
-                            variable_value = [value_node[0].word]
-                        else:
-                            variable_value = variable_value[0].split(' ') 
-                    else:
-                        # If there is a single value, which contains spaces and isn't a command substitution then bash is going to interpret this as an array
-                        variable_value = variable_value[0].split(' ') 
+                for value_node in value_nodes:
+                    if len(value_node.parts) and value_node.parts[0].kind == 'parameter' and value_node.parts[0].value in var_list:  
+                        # This means its a variable declaration and the variable value exists, so we are gonna repalce it 
+                        # If the value doesn't exist we leave it as $var. Useful for things like $1
+                        variable_value = var_list[value_node.parts[0].value]
                     
+                    if len(variable_value) == 1 and type(variable_value[0]) == str and ' ' in variable_value[0]:
+                        if len(value_node.parts):  # Theres a chance its a command substitution, which means splitting on spaces is bad so we verify it isn't one
+                            if value_node.parts[0].kind == 'commandsubstitution': 
+                                value_node = substitute_variables(value_node, var_list)
+                                variable_value = [value_node[0].word]
+                            else:
+                                variable_value = variable_value[0].split(' ') 
+                        else:
+                            # If there is a single value, which contains spaces and isn't a command substitution then bash is going to interpret this as an array
+                            variable_value = variable_value[0].split(' ') 
                 var_list = add_variable_to_list(var_list, name, variable_value)
 
     return var_list
