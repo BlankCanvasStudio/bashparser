@@ -7,3 +7,5 @@ bashparse.egg-info
 */testing.pyc
 testing.py
 testing.pyc
+test.sh
+*/test.sh
