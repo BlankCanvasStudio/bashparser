@@ -12,3 +12,5 @@ class path_variable:
     def __str__(self):
         path = '[' + ','.join(str(x) for x in self.path) + ']'
         return "path_var(" + path + ', ' + str(self.node) + ')'
+    def __eq__(self, obj):
+        return obj.path == self.path

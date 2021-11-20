@@ -73,8 +73,8 @@ class TestAst(TestCase):
 		nodes = bashlex.parse(node_string)
 		paths = return_variable_paths(nodes[0])
 		expected_results = [
-			"path_var([0,3,0], ParameterNode(pos=(9, 11) value='n'))",
-			"path_var([0,5,4,1,0], ParameterNode(pos=(44, 49) value='else'))" 
+			"path_var([0,0,3,0], ParameterNode(pos=(9, 11) value='n'))",
+			"path_var([0,0,5,4,1,0], ParameterNode(pos=(44, 49) value='else'))" 
 		]
 		for i in range(0, len(paths)):
 			self.assertTrue(str(paths[i]) == expected_results[i])

@@ -1,5 +1,5 @@
 from bashparse.path_variable import path_variable
-from bashparse.ast import return_paths_to_node_type, return_variable_paths, shift_ast_pos
+from bashparse.ast import return_paths_to_node_type, return_variable_paths, shift_ast_pos, align_ast
 import bashlex, copy
 
 
@@ -13,7 +13,10 @@ def update_trees_pos(node, path_to_update, delta):
     if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
     if type(delta) is not int: raise ValueError('length_new_value must be an int')
 
-    if path_to_update != [-1] and len(path_to_update):
+    if not len(path_to_update):
+        node.pos = (node.pos[0], node.pos[1] + delta)
+
+    elif path_to_update != [-1]:
         traversed = False
         orig_node = node
         while not traversed:
@@ -81,13 +84,13 @@ def update_command_substitution(node):
 
 def replace_variables_using_paths(nodes, paths, var_list):
     if type(paths) is not list: paths = [paths]
-
     for el in paths:
         if type(el) is not path_variable: raise ValueError('the elements of the paths list must be ints')
     if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
+    if type(nodes) is not list: nodes = [nodes]
     for node in nodes:
         if type(node) is not bashlex.ast.node: raise ValueError('nodes must be of type bashlex.ast.node')
-        
+
     to_return = []
     for node in nodes:
         unique_names = []
@@ -104,16 +107,18 @@ def replace_variables_using_paths(nodes, paths, var_list):
         
         replaced_trees = []
         for i in range(0, unique_trees_needed): replaced_trees += [copy.deepcopy(node)]  # save a bunch of unreplaced trees to be replaced
-
+        
         # Iterate over every location we need to replace. 
         # We divide the number of trees by the number of unique entries we need to replace
         # This returns us the number of areas where unique variables need to be replaced
         # Then we replace these locations
         # If there are 10 unique trees and $n=[1,2] then in the first 5 trees $n will be replaced with 1 and in the next 5 with 2
         for path_val in paths:  # We don't need to worry about replacing a given var all at once as long as it replaces the same every time we encounter it
+            
             if path_val.value:  # Only replace if there is something to replace. $1 would have no value but shouldn't be deleted
                 num_divisions = unique_trees_needed // len(path_val.value)  # Always int cause its a factor
                 for i in range(0, num_divisions):
+                    
                     for j in range(0, len(path_val.value)):
                         node_to_replace = replaced_trees[(i*len(path_val.value)) + j]  # Iterates wonderfully, looks gross
                         # ^ Set the tree to the root node. We will dive to actual node from there (cause thats where paths are found from)
@@ -131,10 +136,9 @@ def replace_variables_using_paths(nodes, paths, var_list):
                             if hasattr(node_to_replace, 'parts'): 
                                 node_one_up = node_to_replace
                                 node_to_replace = node_to_replace.parts[point]
-                            if hasattr(node_to_replace, 'list'):
+                            elif hasattr(node_to_replace, 'list'):
                                 node_one_up = node_to_replace
-                                node_to_replace = node_to_replace.list[point]
-                            
+                                node_to_replace = node_to_replace.list[point]\
                         # Find the location in the string that we actually need to replace and replace with with the var
                         variable_start = node_to_replace.pos[0] - node_one_up.pos[0]
                         variable_end = node_to_replace.pos[1] - node_one_up.pos[0]
@@ -155,118 +159,97 @@ def replace_variables_using_paths(nodes, paths, var_list):
                         node_one_up.word = node_one_up.word[:variable_start] + path_val.value[j] + node_one_up.word[variable_end:]
                         if has_commandsubstitution:
                             update_command_substitution(node=replaced_trees[(i*len(path_val.value)) + j])
-                        update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path, delta= len(path_val.value[j]) -( variable_end - variable_start))
+                        update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path, delta = len(path_val.value[j]) -( variable_end - variable_start))
                         del node_one_up.parts[path_val.path[-1]]  # Remove parameter node because it has been replaced
         to_return += replaced_trees
+    
     return to_return
 
+def replicate_and_replace(node, updated_parts, in_attr, index):
+    to_return = []
+    for i in range(0, len(updated_parts)): to_return += [ copy.deepcopy(node) ]
+    for i, updated_part in enumerate(updated_parts):
+        if in_attr == 'parts': to_return[i].parts[index] = updated_part
+        elif in_attr == 'list': to_return[i].list[index] = updated_part
+        else: setattr(to_return[i], in_attr, updated_part)
+    return to_return
 
 def substitute_variables(nodes, var_list):
     if type(nodes) is not list: nodes = [nodes]
-    for node in nodes: 
-        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
-    if type(var_list) is not dict: raise ValueError('var_list must be a dictionary')
-
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('nodes must be of type bashlex.ast.node')
+    if type(var_list) is not dict: raise ValueError('var_list must be of type dict')
     to_return = []
-    for node_in in nodes:
-        
-        replaced_nodes = []
-        node = copy.deepcopy(node_in)  # This maintains the integrity of the node passed in cause its passed by ref
-        
-        if node.kind != 'pipeline' and node.kind != 'operator' and node.kind != 'word' and node.kind != 'reservedword':
-            # Strip all the assignments from the tree. Sorted in order they appear
-            assignment_nodes = return_paths_to_node_type(node, 'assignment')
-            # Strip all the variables used from the tree. Sorted in order they appear
-            variable_nodes = return_variable_paths(node)
-            # Strip all the for loops used from the tree. Sorted in order they appear
-            for_nodes = return_paths_to_node_type(node, 'for')
-            # Interleave the assignments and variables so that we have an array of assignments and variable uses in the order that they appear
-            assignment_variables_in_order = []
-            while(len(assignment_nodes) and len(variable_nodes)):
-                # Find the shorter path
-                length = len(assignment_nodes[0].path) if len(assignment_nodes[0].path) < len(variable_nodes[0].path) else len(variable_nodes[0].path)
-                assignment_moved = False
-                variable_moved = False
-                for i in range(0, length):
-                    if assignment_nodes[0].path[i] < variable_nodes[0].path[i]:
-                        assignment_variables_in_order += [assignment_nodes[0]]
-                        assignment_moved = True
-                        break
-                    elif assignment_nodes[0].path[i] > variable_nodes[0].path[i]:
-                        assignment_variables_in_order += [variable_nodes[0]]
-                        variable_moved = True
-                        break
-                if assignment_moved: assignment_nodes = assignment_nodes[1:]
-                elif variable_moved: variable_nodes = variable_nodes[1:]
-                else:
-                    if len(assignment_nodes[0].path) < len(variable_nodes[0].path):
-                        assignment_variables_in_order += [ variable_nodes[0], assignment_nodes[0] ]
-                    elif len(variable_nodes[0].path) < len(assignment_nodes[0].path):
-                        assignment_nodes = assignment_nodes[1:]
-                    else:
-                        assignment_variables_in_order += [ variable_nodes[0], assignment_nodes[0] ]
-                    assignment_nodes = assignment_nodes[1:]
-                    variable_nodes = variable_nodes[1:]
-            assignment_variables_in_order += variable_nodes
-            assignment_variables_in_order += assignment_nodes
-
-            action_paths = []
-            while(len(assignment_variables_in_order) and len(for_nodes)):
-                # Find the shorter path
-                length = len(assignment_variables_in_order[0].path) if len(assignment_variables_in_order[0].path) < len(for_nodes[0].path) else len(for_nodes[0].path)
-                assignment_moved = False
-                for_moved = False
-                for i in range(0, length):
-                    if assignment_variables_in_order[0].path[i] < for_nodes[0].path[i]:
-                        action_paths += [assignment_variables_in_order[0]]
-                        assignment_moved = True
-                        break
-                    elif assignment_variables_in_order[0].path[i] > for_nodes[0].path[i]:
-                        assignment_variables_in_order += [for_nodes[0]]
-                        for_moved = True
-                        break
-                if assignment_moved: assignment_variables_in_order = assignment_variables_in_order[1:]
-                elif for_moved: for_nodes = for_nodes[1:]
-                else:
-                    if len(assignment_variables_in_order[0].path) < len(for_nodes[0].path):
-                        action_paths += [ assignment_variables_in_order[0], for_nodes[0] ]
-                    elif len(for_nodes[0].path) < len(assignment_variables_in_order[0].path):
-                        action_paths += [ for_nodes[0], assignment_variables_in_order[0] ]
-                assignment_variables_in_order = assignment_variables_in_order[1:]
-                for_nodes = for_nodes[1:]
-            action_paths += assignment_variables_in_order
-            action_paths += for_nodes
-
-            # Now we have assignments and replacements in the order that they occur
-            replaced_nodes = [ node ]
-            # for action_path in action_paths:
-            i = 0
-            while i < len(action_paths):
-                if action_paths[i].node.kind == 'assignment':
-                    var_list = update_variable_list_with_node(action_paths[i].node, var_list)
-                    i += 1
-                elif action_paths[i].node.kind == 'parameter':
-                    paths = []
-                    while i < len(action_paths) and action_paths[i].node.kind == 'parameter':
-                        paths += [ action_paths[i] ]
-                        i += 1
-                    replaced_nodes = replace_variables_using_paths(replaced_nodes, paths, var_list)
-                elif action_paths[i].node.kind == 'for':
-                    var_list = update_var_list_with_for_loop(action_paths[i].node, var_list)
-                    paths = []
-                    
-                    while i < len(action_paths):
-                        if action_paths[i].path[0:len(action_paths[i].path)] == action_paths[i].path:
-                            if action_paths[i].node.kind == 'parameter':
-                                paths += [ action_paths[i] ]
-                            i += 1
-                    replaced_nodes = replace_variables_using_paths(replaced_nodes, paths, var_list)
-                    i += 1
-
-        if len(replaced_nodes) == 0: return [copy.deepcopy(node)]
-        to_return += replaced_nodes
+    for node in nodes:
+        to_return += execute_substitute_variables(node, var_list)
+        var_list = update_variable_list_with_node(node, var_list)
+    for node in to_return: align_ast(node)
     return to_return
 
+def execute_substitute_variables(node, var_list):
+    to_return = [ copy.deepcopy(node) ] 
+    var_list = copy.deepcopy(var_list)  # We need to keep scoping super rigid now
+    # Iterate to the depths and get the replacements back from them
+    if hasattr(node, 'output'): 
+        replaced_outputs = substitute_variables(node.output, var_list)
+        var_list = update_variable_list_with_node(node.output, var_list)
+        to_return = replicate_and_replace(node, replaced_outputs, 'output', None)
+        
+    if hasattr(node, 'command'):
+        replaced_commands = substitute_variables(node.command, var_list)
+        var_list = update_variable_list_with_node(node.command, var_list)
+        to_return = replicate_and_replace(node, replaced_commands, 'command', None)
+
+    if node.kind == 'for':
+        var_list = update_var_list_with_for_loop(node, var_list)    
+        itr_name = node.parts[1].word
+        for_loop_values = var_list[itr_name]
+        for_to_return = []
+        for value in for_loop_values:
+            to_return = [ copy.deepcopy(node) ]
+            var_list[itr_name] = [value]
+            delta = 0
+            for i, part in enumerate(node.parts):
+                replaced_commands = substitute_variables(part, var_list)
+                var_list = update_variable_list_with_node(part, var_list)
+                newest_replaced_nodes = []
+                for ret_node in to_return:
+                    newest_replaced_nodes += replicate_and_replace(ret_node, replaced_commands, 'parts', i)
+                to_return = newest_replaced_nodes
+            for_to_return += to_return
+
+        to_return = for_to_return
+
+    elif hasattr(node, 'parts'):
+        for i, part in enumerate(reversed(node.parts)):
+            i = len(node.parts) - i - 1
+            
+            if part.kind == 'parameter':
+                newest_replaced_nodes = []
+                for replaced_node in to_return:
+                    newest_replaced_nodes += replace_variables_using_paths(replaced_node, path_variable([i], part), var_list)
+                    var_list = update_variable_list_with_node(newest_replaced_nodes, var_list)
+                to_return = newest_replaced_nodes
+
+            else:
+                replaced_commands = substitute_variables(part, var_list)
+                var_list = update_variable_list_with_node(part, var_list)
+                newest_replaced_nodes = []
+                for ret_node in to_return:
+                    newest_replaced_nodes += replicate_and_replace(ret_node, replaced_commands, 'parts', i)
+                to_return = newest_replaced_nodes
+
+    if hasattr(node, 'list'):
+        for i, part in enumerate(reversed(node.list)):
+            i = len(node.list) - i - 1
+            replaced_commands = substitute_variables(part, var_list)
+            var_list = update_variable_list_with_node(part, var_list)
+            newest_replaced_nodes = []
+            for ret_node in to_return:
+                newest_replaced_nodes += replicate_and_replace(ret_node, replaced_commands, 'list', i)
+            to_return = newest_replaced_nodes
+
+    return to_return
 
 def add_variable_to_list(var_list, name, value): 
     """(variable dict, name, value) Adds the corresponding name and value to dictionary. Planning on people misuing the dictionary
@@ -306,6 +289,12 @@ def update_variable_list_with_node(nodes, var_list):
                 var_list = add_variable_to_list(var_list, name, value)
             elif hasattr(node.parts[0], 'word') and node.parts[0].word == 'for':
                 var_list = update_var_list_with_for_loop(node, var_list)
+            else:
+                for part in node.parts:
+                    var_list = update_variable_list_with_node(part, var_list)
+        if hasattr(node, 'list'):
+            for part in node.list:
+                var_list = update_variable_list_with_node(part, var_list)
 
     return var_list
 

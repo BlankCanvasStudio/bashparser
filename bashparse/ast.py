@@ -38,6 +38,30 @@ def shift_ast_pos_to_start(nodes):
     return shifted_nodes
 
 
+def align_ast(node, start_index=None):
+    if hasattr(node, 'output'): 
+        start_index = align_ast(node.output, start_index)
+        node.pos = (node.output.pos[0], node.output.pos[1])
+    elif hasattr(node, 'command'):
+        start_index = align_ast(node.command, start_index)
+        node.pos = (node.command.pos[0], node.command.pos[1])
+
+    elif hasattr(node, 'parts') and len(node.parts):
+        for part in node.parts:
+            start_index = align_ast(part, start_index)
+        node.pos = (node.parts[0].pos[0], node.parts[-1].pos[1])
+    elif hasattr(node, 'list') and len(node.list):
+        start_index = align_ast(node.list[0], start_index)
+        node.pos = (start_index, 0)
+        for part in node.list[1:]:
+            start_index = align_ast(part, start_index)
+        node.pos = (node.pos[0], node.list[-1].pos[1])
+    else:
+        if hasattr(node, 'word'): node.pos = (node.pos[0], node.pos[0] + len(node.word))
+        if hasattr(node, 'value'): node.pos = (node.pos[0], node.pos[0] + len(node.value)) 
+        if start_index is None: start_index = node.pos[1]
+    return start_index
+
 
 # Make a version that only requires node and node_type
 def execute_return_paths_to_node_type(node, current_path, paths, node_type):
@@ -63,15 +87,14 @@ def execute_return_paths_to_node_type(node, current_path, paths, node_type):
 
 
 def return_paths_to_node_type(nodes, node_type):
-    if type(nodes) is not list: nodes = [nodes]
+    if type(nodes) is not list: 
+        if type(nodes) is bashlex.ast.node: return execute_return_paths_to_node_type(nodes, [], [], node_type)
+        else: nodes = [nodes]
     for el in nodes:
         if type(el) is not bashlex.ast.node: raise ValueError('nodes msut be a bashlex.ast.node')
     paths = []
-    if len(nodes) > 1:
-        for i in range(0, len(nodes)):
-            paths += execute_return_paths_to_node_type(nodes[i], [i], [], node_type)
-    elif len(nodes) == 1:
-        paths = execute_return_paths_to_node_type(nodes[0], [], [], node_type)
+    for i in range(0, len(nodes)):
+        paths += execute_return_paths_to_node_type(nodes[i], [i], [], node_type)
     return paths
 
 
