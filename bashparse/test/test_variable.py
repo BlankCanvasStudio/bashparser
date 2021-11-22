@@ -76,7 +76,6 @@ class TestVariables(TestCase):
         result_strings = ["ListNode(parts=[CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 3) word='n=1')] pos=(0, 3)), OperatorNode(op=';' pos=(3, 4)), CommandNode(parts=[AssignmentNode(parts=[ParameterNode(pos=(7, 8) value='n')] pos=(7, 8) word='a=2$n')] pos=(7, 8))] pos=(0, 8))"]
         replaced_nodes = substitute_variables(nodes[0], {})
         replaced_nodes = [str(x) for x in replaced_nodes]
-        print(replaced_nodes)
         self.assertTrue(replaced_nodes == result_strings)
 
     def test_add_variable_to_list(self):
@@ -152,7 +151,6 @@ class TestVariables(TestCase):
             "ListNode(parts=[CommandNode(parts=[AssignmentNode(parts=[] pos=(0, 15) word='n=one two three')] pos=(0, 15)), OperatorNode(op=';' pos=(17, 18))] pos=(0, 18))",
             "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(33, 35) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(37, 39) word='cd'), WordNode(parts=[] pos=(40, 43) word='one')] pos=(37, 43)), OperatorNode(op=';' pos=(42, 43))] pos=(37, 43)), ReservedwordNode(pos=(44, 48) word='done')] pos=(20, 48))] pos=(23, 48) redirects=[])",
             "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(33, 35) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(37, 39) word='cd'), WordNode(parts=[] pos=(40, 43) word='one')] pos=(37, 43)), OperatorNode(op=';' pos=(42, 43))] pos=(37, 43)), ReservedwordNode(pos=(44, 48) word='done')] pos=(20, 48))] pos=(23, 48) redirects=[])"
-            
             "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 54) word='two')] pos=(48, 54)), OperatorNode(op=';' pos=(54, 55))] pos=(48, 55)), ReservedwordNode(pos=(56, 60) word='done')] pos=(20, 60))] pos=(20, 60) redirects=[])",
             "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(20, 23) word='for'), WordNode(parts=[] pos=(24, 25) word='a'), ReservedwordNode(pos=(26, 28) word='in'), WordNode(parts=[] pos=(29, 42) word='one two three'), ReservedwordNode(pos=(44, 46) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(48, 50) word='cd'), WordNode(parts=[] pos=(51, 56) word='three')] pos=(48, 56)), OperatorNode(op=';' pos=(56, 57))] pos=(48, 57)), ReservedwordNode(pos=(58, 62) word='done')] pos=(20, 62))] pos=(20, 62) redirects=[])"
         ]

@@ -32,9 +32,8 @@ def shift_ast_pos_to_start(nodes):
     for el in nodes:
         if type(el) is not bashlex.ast.node: raise ValueError('nodes must be a bashlex.ast.node')
     shifted_nodes = []
-    shift_amount = nodes[0].pos[0]
     for node in nodes:
-        shifted_nodes += shift_ast_pos(node, -shift_amount)
+        shifted_nodes += shift_ast_pos(node, shift_amount=-nodes[0].pos[0])
     return shifted_nodes
 
 
@@ -137,6 +136,7 @@ def convert_tree_to_string(node):
 
 
 def return_node_at_path(node, path):
+    if type(node) is not bashlex.ast.node: raise ValueError('nodes must be made up of bashparse.node elements')
     if type(path) == path_variable: path = path.path 
     if type(path) is not list: raise ValueError('path must be a list')
     for el in path:
