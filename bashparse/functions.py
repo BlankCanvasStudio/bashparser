@@ -33,7 +33,7 @@ def replace_functions(nodes, function_dictionary={}):
 	for node in nodes:
 		commands = return_paths_to_node_type(node, 'command')
 		for command in commands:
-			if len(command.node.parts) and command.node.parts[0].word in function_dictionary:
+			if len(command.node.parts) and hasattr(command.node.parts[0], 'word') and command.node.parts[0].word in function_dictionary:
 				command_node = return_node_at_path(node, command.path)
 				arguments = command_node.parts[1:]
 				argument_var_list = {}

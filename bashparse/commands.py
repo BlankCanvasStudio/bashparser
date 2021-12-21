@@ -119,7 +119,7 @@ def replace_command_aliasing(nodes, command_alias_list = {}):
         command_nodes = return_paths_to_node_type(top_level_node, 'command')
         for command in command_nodes:
             current_node = return_node_at_path(top_level_node, command.path)
-            if len(current_node.parts) and command.node.parts[0].word in command_alias_list:
+            if len(current_node.parts) and hasattr(command.node.parts[0], 'word') and command.node.parts[0].word in command_alias_list:
                 current_node.parts[0].word = command_alias_list[current_node.parts[0].word] 
         to_return += [ top_level_node ]
     
