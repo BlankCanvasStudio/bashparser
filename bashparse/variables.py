@@ -153,7 +153,8 @@ def replace_variables_using_paths(nodes, paths, var_list):
                             update_command_substitution(node=replaced_trees[(i*len(path_val.value)) + j])
                         #update_trees_pos(node=replaced_trees[(i*len(path_val.value)) + j], path_to_update=path_val.path, delta = len(path_val.value[j]) -( variable_end - variable_start))
                         node_one_up.pos = (node_one_up.pos[0], node_one_up.pos[0] + len(node_one_up.word)+1)
-                        del node_one_up.parts[path_val.path[-1]]  # Remove parameter node because it has been replaced
+                        if path_val.node.value in var_list:           # Only trigger this if the variable exists
+                            del node_one_up.parts[path_val.path[-1]]  # Remove parameter node because it has been replaced
         to_return += replaced_trees
     
     return to_return
