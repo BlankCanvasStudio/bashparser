@@ -21,7 +21,7 @@ def shift_ast_pos(nodes, shift_amount):
                 shift_ast_pos(part, shift_amount)
         if hasattr(node, 'command'):  # some nodes are just pass through nodes
             shift_ast_pos(node.command, shift_amount)
-        if hasattr(node, 'output'):   # some nodes are just pass through nodes
+        if hasattr(node, 'output') and type(node) == bashlex.ast.node:   # some nodes are just pass through nodes
             shift_ast_pos(node.output, shift_amount)
     return nodes
 
@@ -38,7 +38,9 @@ def shift_ast_pos_to_start(nodes):
 
 
 def align_ast(node, start_index=None):
+    if type(node) != bashlex.ast.node: return start_index
     if hasattr(node, 'output'): 
+        if type(node.output) != bashlex.ast.node: return start_index
         start_index = align_ast(node.output, start_index)
         node.pos = (node.output.pos[0], node.output.pos[1])
     elif hasattr(node, 'command'):
@@ -74,7 +76,9 @@ def execute_return_paths_to_node_type(node, current_path, paths, node_type):
     if hasattr(node, 'list') and len(node.list):
         for i in range(0, len(node.list)): paths = execute_return_paths_to_node_type(node.list[i], current_path + [i], paths, node_type)
     # If its a redirect node, call the replacement on the node its redirection to
-    if node.kind == 'redirect' and hasattr(node, 'output'): paths = execute_return_paths_to_node_type(node.output, current_path, paths, node_type) 
+    if node.kind == 'redirect' and hasattr(node, 'output'): 
+        if type(node.output) == bashlex.ast.node: paths = execute_return_paths_to_node_type(node.output, current_path, paths, node_type) 
+        else: paths = []
     # If its a command node, call the replacement on the node its actually referencing
     if hasattr(node, 'command'): paths = execute_return_paths_to_node_type(node.command, current_path, paths, node_type)
     # If the node is a parameter node, save its location into a variable path object
@@ -87,13 +91,12 @@ def execute_return_paths_to_node_type(node, current_path, paths, node_type):
 
 def return_paths_to_node_type(nodes, node_type):
     if type(nodes) is not list: 
-        if type(nodes) is bashlex.ast.node: return execute_return_paths_to_node_type(nodes, [], [], node_type)
-        else: nodes = [nodes]
+        nodes = [nodes]
     for el in nodes:
         if type(el) is not bashlex.ast.node: raise ValueError('nodes msut be a bashlex.ast.node')
     paths = []
-    for i in range(0, len(nodes)):
-        paths += execute_return_paths_to_node_type(nodes[i], [i], [], node_type)
+    for i, node in enumerate(nodes):
+        paths += execute_return_paths_to_node_type(node, [i], [], node_type)
     return paths
 
 
@@ -148,6 +151,8 @@ def return_node_at_path(node, path):
         
         elif hasattr(node, 'list') and len(node.list): return return_node_at_path(node.list[path[0]], path[1:])
         
-        if node.kind == 'redirect' and hasattr(node, 'output'): return return_node_at_path(node.output, path)
+        if node.kind == 'redirect' and hasattr(node, 'output'): 
+            if type(node.output) != bashlex.ast.node: return None
+            return return_node_at_path(node.output, path)
 
         if hasattr(node, 'command'): return return_node_at_path(node.command, path)

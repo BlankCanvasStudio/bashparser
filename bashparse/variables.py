@@ -34,7 +34,7 @@ def update_trees_pos(node, path_to_update, delta):
                     node.pos = ( node.pos[0], node.pos[1] + delta )
                     node = node.command
                     orig_node = orig_node.command
-            elif hasattr(node, 'output'):   # some nodes are just pass through nodes
+            elif hasattr(node, 'output')  and type(node.output) == bashlex.ast.node:   # some nodes are just pass through nodes
                     node.pos = ( node.pos[0], node.pos[1] + delta )
                     node = node.output
                     orig_node = orig_node.output
@@ -53,7 +53,7 @@ def update_command_substitution(node):
 
     for path_var in command_substitutions_paths:
         command_node = node
-        for point in path_var.path:
+        for point in path_var.path[1:]:
             # The commandsubstitution node needs to be passed through and doesn't contain the word that needs to be updated
             # The node of which command substitution is a part needs to be updated, so we need to find both the commandsubstitution
                 # node and the node above the commandsubstitution node w
@@ -185,7 +185,7 @@ def substitute_variables(nodes, var_list):
 def execute_substitute_variables(node, var_list):
     to_return = [ copy.deepcopy(node) ] 
     # Iterate to the depths and get the replacements back from them
-    if hasattr(node, 'output'): 
+    if hasattr(node, 'output') and type(node.output) == bashlex.ast.node: 
         replaced_outputs = substitute_variables(node.output, var_list)
         var_list = update_variable_list_with_node(node.output, var_list)
         to_return = replicate_and_replace(node, replaced_outputs, 'output', None)

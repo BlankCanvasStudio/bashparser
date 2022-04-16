@@ -118,13 +118,13 @@ def replace_command_aliasing(nodes, command_alias_list = {}):
         top_level_node = copy.deepcopy(node)
         command_nodes = return_paths_to_node_type(top_level_node, 'command')
         for command in command_nodes:
-            current_node = return_node_at_path(top_level_node, command.path)
-            if len(current_node.parts) and hasattr(command.node.parts[0], 'word') and command.node.parts[0].word in command_alias_list:
+            current_node = return_node_at_path(top_level_node, command.path[1:])
+            if hasattr(current_node, 'parts') and len(current_node.parts) and hasattr(command.node.parts[0], 'word') and command.node.parts[0].word in command_alias_list:
                 current_node.parts[0].word = command_alias_list[current_node.parts[0].word] 
         
         redirect_nodes = return_paths_to_node_type(top_level_node, 'redirect')
         for redirect in redirect_nodes:
-            current_node = return_node_at_path(top_level_node, redirect.path)
+            current_node = return_node_at_path(top_level_node, redirect.path[1:])
             mem_nodes_to_unalias = ['input', 'output']
             for mem_node_name in mem_nodes_to_unalias:
                 node_to_unalias = getattr(current_node, mem_node_name) 
