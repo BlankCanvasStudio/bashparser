@@ -147,3 +147,9 @@ class TestVariables(TestCase):
 		replaced_nodes = [str(x) for x in replaced_nodes]
 		expected_results = ["ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(0, 2) word='mv'), WordNode(parts=[] pos=(3, 15) word='/usr/bin/one'), WordNode(parts=[] pos=(16, 28) word='/usr/bin/two')] pos=(0, 28)), OperatorNode(op=';' pos=(28, 29)), CommandNode(parts=[WordNode(parts=[] pos=(30, 42) word='/usr/bin/one'), WordNode(parts=[] pos=(43, 52) word='arguments')] pos=(30, 52)), OperatorNode(op=';' pos=(52, 53)), CommandNode(parts=[WordNode(parts=[] pos=(54, 57) word='one'), WordNode(parts=[] pos=(58, 68) word='arguments2')] pos=(54, 68))] pos=(0, 68))"]
 		self.assertTrue(replaced_nodes == expected_results)
+		# Testing if redirect node replacement works 
+		mv_node = bashlex.parse('mv /usr/bin/echo /tmp/hello;> /tmp/hello this')[0]
+		replaced_nodes = resolve_command_aliasing(mv_node)
+		replaced_nodes = [str(x) for x in replaced_nodes]
+		expected_results = ["ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(0, 2) word='mv'), WordNode(parts=[] pos=(3, 16) word='/usr/bin/echo'), WordNode(parts=[] pos=(17, 27) word='/tmp/hello')] pos=(0, 27)), OperatorNode(op=';' pos=(27, 28)), CommandNode(parts=[RedirectNode(heredoc=None input=None output=WordNode(parts=[] pos=(30, 40) word='/usr/bin/echo') pos=(28, 40) type='>'), WordNode(parts=[] pos=(41, 45) word='this')] pos=(28, 45))] pos=(0, 45))"]
+		self.assertTrue(replaced_nodes == expected_results)
