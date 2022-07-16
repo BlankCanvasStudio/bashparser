@@ -15,7 +15,7 @@ def replace_functions(nodes, fn_dict):
 				function_body = copy.deepcopy(compound_node)
 				function_body.list = function_body.list[1:-1]				# Brackets are 1st & last elements
 				fn_cmds = copy.deepcopy(compound_node).list[1:-1][0]		# Brackets are 1st & last elements. The center element is a list node containing all the commands to be executed
-				fn_cmds = bpast.justify(fn_cmds)
+				fn_cmds = NodeVisitor(fn_cmds).justify()
 				fn_dict[node.parts[0].word] = fn_cmds					# node.parts[0] is the function's name	
 
 		elif node.kind == 'command':
@@ -47,7 +47,7 @@ def replace_functions(nodes, fn_dict):
 					new_children = NodeVisitor(parent).children()[:loc[-1]] 
 					start = new_children[-1].pos[1] + 1
 
-					body = bpast.align(body, start)
+					body = NodeVisitor(body).align(delta=start)
 
 					while body.parts[-1].kind == 'operator' and body.parts[-1].op == '\n':		# parser automatically removes extra \n so we must as well
 						body.parts = body.parts[:-1]
@@ -59,8 +59,8 @@ def replace_functions(nodes, fn_dict):
 					delta = -end_of_original_children[-1].pos[1]
 					for new_child in end_of_original_children:
 						start = new_children[-1].pos[1] + 1
-						new_child = bpast.justify(new_child)
-						new_child = bpast.align(new_child, start) 
+						new_child = NodeVisitor(new_child).justify()
+						new_child = NodeVisitor(new_child).align(delta=start) 
 						new_children += [ new_child ]
 
 					delta += new_children[-1].pos[1] 

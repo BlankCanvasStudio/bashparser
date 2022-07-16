@@ -5,6 +5,7 @@ parse = bashlex.parse
 
 node = bashlex.ast.node
 
+NodeVisitor = ast.NodeVisitor
 
 # path_variable = path_variable.path_variable
 

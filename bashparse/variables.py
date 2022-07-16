@@ -118,6 +118,7 @@ def replace_variables(node, var_list, var_list_order = []):
                         adjust_node_deltas(vstr, j)
                     except Exception as e:
                         print('Error in adjusting node deltas in replace_variables')
+                        print('Exception: ', e)
                         print('current node: ', node.dump())
                         print('path: ', vstr.path)
                         print('root: ', vstr.root.dump())

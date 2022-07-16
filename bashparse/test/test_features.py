@@ -5,7 +5,8 @@ I need to make sure every new update keeps the important featuers"""
 from unittest import TestCase
 import bashparse
 import bashparse.variables as bpvar
-from bashparse.ast import justify
+from bashparse import NodeVisitor
+# from bashparse.ast import justify
 
 import os
 
@@ -22,7 +23,7 @@ class TestFeatures(TestCase):
 							+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo 2 b foo\n echo global vars: 2 b\n echo functional vars: "2 .. b" \n done\n done ')
 		# bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[4:9]))
 		for i, result in enumerate(expected_results):
-			expected_results[i] = justify(expected_results[i])
+			expected_results[i] = NodeVisitor(expected_results[i]).justify()
 		# expected_results = expected_results[1:]
 		#nodes = bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[1])) \
 		#		+ bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[2])) \
@@ -32,7 +33,7 @@ class TestFeatures(TestCase):
 				+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo $i $j foo\n yep "$i .. $j"\n done\n done')
 		
 		#bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[1:3]))
-		for i, node in enumerate(nodes): nodes[i] = justify(node)
+		for i, node in enumerate(nodes): nodes[i] = NodeVisitor(node).justify()
 		function_dict = {}
 		var_list = {}
 		# function_dict = bashparse.build_function_dictionary(nodes, function_dict)
