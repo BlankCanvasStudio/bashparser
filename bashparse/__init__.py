@@ -41,6 +41,34 @@ replace_command_aliasing = commands.replace_command_aliasing
 resolve_command_aliasing = commands.resolve_command_aliasing
 
 
+
+
+at_path = NodeVisitor(None).at_path
+
+children = NodeVisitor(None).children
+
+child = NodeVisitor(None).child
+
+set_children = NodeVisitor(None).set_children
+
+swap_node = ast.NodeVisitor(None).swap_node
+
+remove = ast.NodeVisitor(None).remove
+
+align = ast.NodeVisitor(None).align
+
+justify = ast.NodeVisitor(None).justify
+
+
+
+
+
+
+
+
+
+
+
 #shift_tree_pos = ast.shift_ast_pos
 	
 #shift_tree_pos_to_start = ast.shift_ast_pos_to_start
