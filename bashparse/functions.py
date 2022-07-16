@@ -1,69 +1,81 @@
-from bashparse.ast import return_nodes_of_type, return_node_at_path, return_paths_to_node_type, return_variable_paths, shift_ast_pos_to_start, shift_ast_pos
-from bashparse.variables import substitute_variables, replace_variables_using_paths
+# from bashparse.ast import return_variable_paths, shift_ast_pos_to_start, shift_ast_pos, return_node_at_path,  return_nodes_of_type, return_paths_to_node_type, 
+from bashparse.variables import substitute_variables, replace_variables
+from bashparse.ast import NodeVisitor, CONT
+import bashparse.ast as bpast
 import bashparse, copy, enum
 
 
-def build_function_dictionary(nodes, function_dictionary={}):
-	if type(nodes) is not list: nodes = [nodes]
-	for node in nodes:
-		if type(node) is not bashparse.node: raise ValueError('nodes must be made up of bashparse.node elements')
+def replace_functions(nodes, fn_dict):
 
-	functions = return_nodes_of_type(nodes, 'function')
-	functions = functions + functions
-	for function in functions:
-		function_body = None
-		compound_nodes = return_nodes_of_type(function, 'compound')
+	def apply_fn(node, vstr, fn_dict, fn_repl_dict):
+		if node.kind == 'function':		
+			compound_node = node.parts[-1]		# The last node is the body of the function
 
-		for compound_node in compound_nodes:
 			if compound_node.list[0].kind == 'reservedword' and compound_node.list[0].word == '{':
 				function_body = copy.deepcopy(compound_node)
-				function_body.list = function_body.list[1:-1]
-				break
-		if function_body is not None:
-			function_dictionary[function.parts[0].word] = function_body
+				function_body.list = function_body.list[1:-1]				# Brackets are 1st & last elements
+				fn_cmds = copy.deepcopy(compound_node).list[1:-1][0]		# Brackets are 1st & last elements. The center element is a list node containing all the commands to be executed
+				fn_cmds = bpast.justify(fn_cmds)
+				fn_dict[node.parts[0].word] = fn_cmds					# node.parts[0] is the function's name	
 
-	return function_dictionary
+		elif node.kind == 'command':
 
-def replace_functions(nodes, function_dictionary={}):
-	if type(nodes) is not list: nodes = [nodes]
-	for node in nodes:
-		if type(node) is not bashparse.node: raise ValueError('nodes must be made up of bashparse.node elements')
-	if type(function_dictionary) is not dict: raise ValueError('function_dictionary must be a dictionary')
+				if not (len(node.parts) and hasattr(node.parts[0], 'word') \
+					and node.parts[0].word in fn_dict): return CONT
 
-	for node in nodes:
-		commands = return_paths_to_node_type(node, 'command')
-		for command in commands:
-			if len(command.node.parts) and hasattr(command.node.parts[0], 'word') and command.node.parts[0].word in function_dictionary:
-				command_node = return_node_at_path(node, command.path[1:])
-				arguments = command_node.parts[1:]
-				argument_var_list = {}
+				arguments = node.parts[1:]
+				arg_list = {}
 				for i, argument in enumerate(arguments): 
-					argument_var_list[str(i+1)] = [ argument.word ]
-				function_body = function_dictionary[command.node.parts[0].word]
-				function_body = replace_function_arguments(function_body, argument_var_list)[0]
-				command_node.kind = 'compound'
-				setattr(command_node, 'list', function_body.list)
-				setattr(command_node, 'redirects', function_body.redirects)
-				delattr(command_node, 'parts')
-	return nodes
+					arg_list[str(i+1)] = [ argument.word ]
+				function_body = fn_dict[node.parts[0].word]
+				bodies_replaced = replace_variables(function_body, arg_list)
+				fn_repl_dict[' '.join([str(x) for x in vstr.path])] = bodies_replaced		# encode path as string cause lists are unhashable
 
+		return CONT
 
-def replace_function_arguments(nodes, argument_var_list={}):
-	if type(nodes) is not list: nodes = [nodes]
-	for node in nodes:
-		if type(node) is not bashparse.node: raise ValueError('nodes must be made up of bashparse.node elements')
-	if type(argument_var_list) is not dict: raise ValueError('function_dictionary must be a dictionary')
+	def do_replacement(node, vstr, fn_repl_dict):
+		for loc, bodies in reversed(fn_repl_dict.items()):	# We need to iterate this backwards so the index doesn't change 
+			loc = [int(x) for x in loc.split(' ')]			# lists are unhashable so we converted it to a space separated string
+			new_nodes = []
+			for body in bodies: new_nodes = copy.deepcopy(vstr.nodes) 
+			vstr.nodes = new_nodes
+
+			division_width = len(vstr.nodes) // len(bodies)
+			for i, body in enumerate(bodies):
+				for j in range(i*division_width, (i+1)*division_width):
+					parent = vstr.at_path(vstr.nodes[j], loc[:-1])
+					new_children = NodeVisitor(parent).children()[:loc[-1]] 
+					start = new_children[-1].pos[1] + 1
+
+					body = bpast.align(body, start)
+
+					while body.parts[-1].kind == 'operator' and body.parts[-1].op == '\n':		# parser automatically removes extra \n so we must as well
+						body.parts = body.parts[:-1]
+					new_children += body.parts
+					
+					index_of_last_new_child = len(new_children)
+					
+					end_of_original_children = NodeVisitor(parent).children()[loc[-1]+1:]
+					delta = -end_of_original_children[-1].pos[1]
+					for new_child in end_of_original_children:
+						start = new_children[-1].pos[1] + 1
+						new_child = bpast.justify(new_child)
+						new_child = bpast.align(new_child, start) 
+						new_children += [ new_child ]
+
+					delta += new_children[-1].pos[1] 
+					vstr.set_children(parent, new_children)
+					""" Need to expand along path & right of path to account for new children """
+					vstr.nodes[j] = bpast.expand_ast_along_path(vstr.nodes[j], loc[:-1], delta)
+					path_to_shift_right_of = loc[:-1] + [ index_of_last_new_child ]
+					vstr.nodes[j] = bpast.shift_ast_right_of_path(vstr.nodes[j], path_to_shift_right_of, delta)
+
+		return vstr.nodes
+
 	replaced_nodes = []
+	fn_repl_dict = {}
 	for node in nodes:
-		replaced_node = node
-		variables = return_variable_paths(node)
-		for variable in reversed(variables):
-			if variable.node.value in argument_var_list:
-				variable.path = variable.path[1:]
-				replaced_node = replace_variables_using_paths(node, variable, argument_var_list)[0]
-				variable.path = variable.path[:-1]
-				node_one_up = return_node_at_path(replaced_node, variable)
-				node_one_up.parts = bashparse.parse('"'+node_one_up.word+'"')[0].parts[0].parts
-				node_one_up.parts = shift_ast_pos(shift_ast_pos_to_start(node_one_up.parts), node_one_up.pos[0])
-		replaced_nodes += [ replaced_node ]
+		vstr = NodeVisitor(node)
+		vstr.apply(apply_fn, vstr, fn_dict, fn_repl_dict)
+		replaced_nodes += do_replacement(node, vstr, fn_repl_dict) 
 	return replaced_nodes

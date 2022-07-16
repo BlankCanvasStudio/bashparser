@@ -4,22 +4,65 @@ I need to make sure every new update keeps the important featuers"""
 
 from unittest import TestCase
 import bashparse
+import bashparse.variables as bpvar
+from bashparse.ast import justify
+
+import os
 
 class TestFeatures(TestCase):
 
 	def test_scoping_unrolling_and_functions(self):
-		expected_results = [
-			"FunctionNode(body=CompoundNode(list=[ReservedwordNode(pos=(6, 7) word='{'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[ParameterNode(pos=(27, 29) value='i')] pos=(27, 29) word='$i'), WordNode(parts=[ParameterNode(pos=(30, 32) value='j')] pos=(30, 32) word='$j')] pos=(9, 32)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[ParameterNode(pos=(56, 58) value='1')] pos=(56, 58) word='$1')] pos=(34, 58)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59)), ReservedwordNode(pos=(60, 61) word='}')] pos=(6, 61) redirects=[]) name=WordNode(parts=[] pos=(0, 3) word='yep') parts=[WordNode(parts=[] pos=(0, 3) word='yep'), ReservedwordNode(pos=(3, 4) word='('), ReservedwordNode(pos=(4, 5) word=')'), CompoundNode(list=[ReservedwordNode(pos=(6, 7) word='{'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[ParameterNode(pos=(27, 28) value='i')] pos=(27, 28) word='$i'), WordNode(parts=[ParameterNode(pos=(30, 31) value='j')] pos=(30, 31) word='$j')] pos=(9, 31)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[ParameterNode(pos=(56, 57) value='1')] pos=(56, 57) word='$1')] pos=(34, 57)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59)), ReservedwordNode(pos=(60, 61) word='}')] pos=(3, 61) redirects=[])] pos=(0, 61))", "CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(63, 66) word='for'), WordNode(parts=[] pos=(67, 68) word='i'), ReservedwordNode(pos=(69, 71) word='in'), WordNode(parts=[] pos=(72, 73) word='1'), WordNode(parts=[] pos=(74, 75) word='2'), ReservedwordNode(pos=(75, 76) word=';'), ReservedwordNode(pos=(77, 79) word='do'), CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(81, 84) word='for'), WordNode(parts=[] pos=(85, 86) word='j'), ReservedwordNode(pos=(87, 89) word='in'), WordNode(parts=[] pos=(90, 91) word='a'), WordNode(parts=[] pos=(92, 93) word='b'), ReservedwordNode(pos=(93, 94) word=';'), ReservedwordNode(pos=(95, 97) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(99, 103) word='echo'), WordNode(parts=[] pos=(104, 105) word='1'), WordNode(parts=[] pos=(107, 108) word='a'), WordNode(parts=[] pos=(110, 113) word='foo')] pos=(99, 113)), OperatorNode(op='\\n' pos=(113, 114)), CompoundNode(list=[ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[] pos=(27, 28) word='1'), WordNode(parts=[] pos=(30, 31) word='a')] pos=(9, 31)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[] pos=(56, 62) word='1 .. a')] pos=(34, 62)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59))] pos=(66, 59) redirects=[]), OperatorNode(op='\\n' pos=(129, 130))] pos=(99, 130)), ReservedwordNode(pos=(131, 135) word='done')] pos=(81, 135))] pos=(66, 135) redirects=[]), ReservedwordNode(pos=(137, 141) word='done')] pos=(63, 141))] pos=(66, 141) redirects=[])", 
-			"CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(63, 66) word='for'), WordNode(parts=[] pos=(67, 68) word='i'), ReservedwordNode(pos=(69, 71) word='in'), WordNode(parts=[] pos=(72, 73) word='1'), WordNode(parts=[] pos=(74, 75) word='2'), ReservedwordNode(pos=(75, 76) word=';'), ReservedwordNode(pos=(77, 79) word='do'), CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(81, 84) word='for'), WordNode(parts=[] pos=(85, 86) word='j'), ReservedwordNode(pos=(87, 89) word='in'), WordNode(parts=[] pos=(90, 91) word='a'), WordNode(parts=[] pos=(92, 93) word='b'), ReservedwordNode(pos=(93, 94) word=';'), ReservedwordNode(pos=(95, 97) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(99, 103) word='echo'), WordNode(parts=[] pos=(104, 105) word='1'), WordNode(parts=[] pos=(107, 108) word='b'), WordNode(parts=[] pos=(110, 113) word='foo')] pos=(99, 113)), OperatorNode(op='\\n' pos=(113, 114)), CompoundNode(list=[ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[] pos=(27, 28) word='1'), WordNode(parts=[] pos=(30, 31) word='b')] pos=(9, 31)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[] pos=(56, 62) word='1 .. b')] pos=(34, 62)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59))] pos=(66, 59) redirects=[]), OperatorNode(op='\\n' pos=(129, 130))] pos=(99, 130)), ReservedwordNode(pos=(131, 135) word='done')] pos=(81, 135))] pos=(66, 135) redirects=[]), ReservedwordNode(pos=(137, 141) word='done')] pos=(63, 141))] pos=(66, 141) redirects=[])", 
-			"CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(63, 66) word='for'), WordNode(parts=[] pos=(67, 68) word='i'), ReservedwordNode(pos=(69, 71) word='in'), WordNode(parts=[] pos=(72, 73) word='1'), WordNode(parts=[] pos=(74, 75) word='2'), ReservedwordNode(pos=(75, 76) word=';'), ReservedwordNode(pos=(77, 79) word='do'), CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(81, 84) word='for'), WordNode(parts=[] pos=(85, 86) word='j'), ReservedwordNode(pos=(87, 89) word='in'), WordNode(parts=[] pos=(90, 91) word='a'), WordNode(parts=[] pos=(92, 93) word='b'), ReservedwordNode(pos=(93, 94) word=';'), ReservedwordNode(pos=(95, 97) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(99, 103) word='echo'), WordNode(parts=[] pos=(104, 105) word='2'), WordNode(parts=[] pos=(107, 108) word='a'), WordNode(parts=[] pos=(110, 113) word='foo')] pos=(99, 113)), OperatorNode(op='\\n' pos=(113, 114)), CompoundNode(list=[ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[] pos=(27, 28) word='2'), WordNode(parts=[] pos=(30, 31) word='a')] pos=(9, 31)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[] pos=(56, 62) word='2 .. a')] pos=(34, 62)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59))] pos=(66, 59) redirects=[]), OperatorNode(op='\\n' pos=(129, 130))] pos=(99, 130)), ReservedwordNode(pos=(131, 135) word='done')] pos=(81, 135))] pos=(66, 135) redirects=[]), ReservedwordNode(pos=(137, 141) word='done')] pos=(63, 141))] pos=(66, 141) redirects=[])", 
-			"CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(63, 66) word='for'), WordNode(parts=[] pos=(67, 68) word='i'), ReservedwordNode(pos=(69, 71) word='in'), WordNode(parts=[] pos=(72, 73) word='1'), WordNode(parts=[] pos=(74, 75) word='2'), ReservedwordNode(pos=(75, 76) word=';'), ReservedwordNode(pos=(77, 79) word='do'), CompoundNode(list=[ForNode(parts=[ReservedwordNode(pos=(81, 84) word='for'), WordNode(parts=[] pos=(85, 86) word='j'), ReservedwordNode(pos=(87, 89) word='in'), WordNode(parts=[] pos=(90, 91) word='a'), WordNode(parts=[] pos=(92, 93) word='b'), ReservedwordNode(pos=(93, 94) word=';'), ReservedwordNode(pos=(95, 97) word='do'), ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(99, 103) word='echo'), WordNode(parts=[] pos=(104, 105) word='2'), WordNode(parts=[] pos=(107, 108) word='b'), WordNode(parts=[] pos=(110, 113) word='foo')] pos=(99, 113)), OperatorNode(op='\\n' pos=(113, 114)), CompoundNode(list=[ListNode(parts=[CommandNode(parts=[WordNode(parts=[] pos=(9, 13) word='echo'), WordNode(parts=[] pos=(14, 20) word='global'), WordNode(parts=[] pos=(21, 26) word='vars:'), WordNode(parts=[] pos=(27, 28) word='2'), WordNode(parts=[] pos=(30, 31) word='b')] pos=(9, 31)), OperatorNode(op='\\n' pos=(32, 33)), CommandNode(parts=[WordNode(parts=[] pos=(34, 38) word='echo'), WordNode(parts=[] pos=(39, 49) word='functional'), WordNode(parts=[] pos=(50, 55) word='vars:'), WordNode(parts=[] pos=(56, 62) word='2 .. b')] pos=(34, 62)), OperatorNode(op='\\n' pos=(58, 59))] pos=(9, 59))] pos=(66, 59) redirects=[]), OperatorNode(op='\\n' pos=(129, 130))] pos=(99, 130)), ReservedwordNode(pos=(131, 135) word='done')] pos=(81, 135))] pos=(66, 135) redirects=[]), ReservedwordNode(pos=(137, 141) word='done')] pos=(63, 141))] pos=(66, 141) redirects=[])"	
-		]
-		text = "yep() {\n echo global vars: $i $j\n echo functional vars: $1\n }\n for i in 1 2; do\n for j in a b; do\n echo $i $j foo\n yep \"$i .. $j\"\n done\n done"
-		nodes = bashparse.parse(text)
+		#print()
+		#print(open('./bashparse/test/features_test_code.txt').readlines()[4])
+		#print(bashparse.parse(open('./bashparse/test/features_test_code.txt').readlines()[1]))
+		expected_results = bashparse.parse('yep() { \n echo global vars: $i $j\n echo functional vars: $1\n }') \
+							+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo 1 a foo\n echo global vars: 1 a\n echo functional vars: "1 .. a" \n done\n done ') \
+							+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo 1 b foo\n echo global vars: 1 b\n echo functional vars: "1 .. b" \n done\n done ') \
+							+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo 2 a foo\n echo global vars: 2 a\n echo functional vars: "2 .. a" \n done\n done ') \
+							+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo 2 b foo\n echo global vars: 2 b\n echo functional vars: "2 .. b" \n done\n done ')
+		# bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[4:9]))
+		for i, result in enumerate(expected_results):
+			expected_results[i] = justify(expected_results[i])
+		# expected_results = expected_results[1:]
+		#nodes = bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[1])) \
+		#		+ bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[2])) \
+		#		+ bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[3]))
+		
+		nodes = bashparse.parse('yep() { \n echo global vars: $i $j\n echo functional vars: $1\n }') \
+				+ bashparse.parse('for i in 1 2; do \n for j in a b; do\n echo $i $j foo\n yep "$i .. $j"\n done\n done')
+		
+		#bashparse.parse(''.join(open('./bashparse/test/features_test_code.txt').readlines()[1:3]))
+		for i, node in enumerate(nodes): nodes[i] = justify(node)
 		function_dict = {}
 		var_list = {}
-		function_dict = bashparse.build_function_dictionary(nodes)
+		# function_dict = bashparse.build_function_dictionary(nodes, function_dict)
 		unrolled_nodes = bashparse.replace_functions(nodes, function_dict)
-		actual_results = bashparse.substitute_variables(unrolled_nodes, var_list)
-		actual_results = [str(x) for x in actual_results]
+		#print()
+		#for node in unrolled_nodes:
+		#	print(node.dump())
+		#print('\n\n\n')
+		actual_results = []
+		#print('unrolled nodes: ')
+		for node in unrolled_nodes:
+			# print(node.dump())
+			var_list = bpvar.update_variable_list_with_node(node, var_list)
+			
+			actual_results += bpvar.replace_variables(node, var_list)
+		#print('end unrolled nodes')
+		#print()
+		#print('expected:\n'+ expected_results[1].dump())
+		#print('results:\n'+ actual_results[1].dump())
+		#print(expected_results[1] == actual_results[1])
+		#print('\n\n')
+		#print('expected len: ', len(expected_results))
+		"""
+		for i in range(0, len(expected_results)):
+			#print(expected_results[i].dump())
+			#print(actual_results[i].dump())
+			print()
+			print('expected: ', expected_results[i].dump())
+			print('results: ', actual_results[i].dump())
+			print(expected_results[i] == actual_results[i])
+			print('\n\n')
+		"""
 		self.assertTrue(expected_results == actual_results)
