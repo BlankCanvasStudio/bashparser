@@ -34,11 +34,11 @@ replace_variables = variables.replace_variables
 
 # return_commands_from_for_loops = commands.return_commands_from_for_loops
 
-return_command_aliasing = commands.return_command_aliasing
+build_alias_table = commands.build_alias_table
 
-replace_command_aliasing = commands.replace_command_aliasing
+resolve_aliasing = commands.resolve_aliasing
 
-resolve_command_aliasing = commands.resolve_command_aliasing
+resolve_command_aliasing = commands.build_and_resolve_aliasing
 
 
 

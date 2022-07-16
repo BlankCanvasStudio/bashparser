@@ -407,7 +407,6 @@ class NodeVisitor:
             node.pos = ( start, node.pos[1] + delta )
             return CONT
         NodeVisitor(root=node).apply(adjust_pos, delta)    
-        #return NodeVisitor(root=node).apply(adjust_pos, delta).root
         return node
 
 
