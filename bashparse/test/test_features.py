@@ -37,7 +37,7 @@ class TestFeatures(TestCase):
 		function_dict = {}
 		var_list = {}
 		# function_dict = bashparse.build_function_dictionary(nodes, function_dict)
-		unrolled_nodes = bashparse.replace_functions(nodes, function_dict)
+		unrolled_nodes = bashparse.build_and_resolve_fns(nodes, function_dict)
 		#print()
 		#for node in unrolled_nodes:
 		#	print(node.dump())

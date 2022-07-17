@@ -432,7 +432,8 @@ def expand_ast_along_path(root, path_to_update, delta):
 
 
 def shift_ast_right_of_path(node, path_to_update, delta):
-    
+    """ Takes a root and adds the delta to both pos attributes if its to the right of the path. Excludes the path.
+        Functions BY REFERENCE not value but returns the node for posterity sake """
     if type(node) is not bashlex.ast.node: raise ValueError('node must be a bashparse.node')
     if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
     if type(delta) is not int: raise ValueError('delta must be an int')
