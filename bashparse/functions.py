@@ -26,17 +26,8 @@ def build_fn_table(node, fn_dict={}):
 	return fn_dict
 
 
-def build_and_resolve_fns(nodes, fn_dict={}):
-	""" Helpful wrapper """
-	new_nodes = []
-	for node in nodes: 
-		fn_dict = build_fn_table(node, fn_dict)
-		new_nodes += resolve_functions(node, fn_dict)
-	return new_nodes
-
-
-def resolve_functions(node, fn_dict):
-	def build_body_replacements(node, vstr, fn_dict, fn_repl_dict):
+def resolve_functions(node, fn_dict, var_list = None):
+	def build_body_replacements(node, vstr, fn_dict, fn_repl_dict, var_list = None):
 		""" Finds all the function calls in node, takes in the arguments, replaces all
 			arguments in the function body, and saves the pathation where it should 
 			be replaced in the funct. Function replacement needs to happen at the end 
@@ -49,14 +40,19 @@ def resolve_functions(node, fn_dict):
 		# Get the arguments from the function call
 		arguments = node.parts[1:]
 		arg_list = {}
+
+		""" We replace the arguments with the nodes themselves. This allows for the function arguments 
+			to contain parameters themselves and still be replaced properly """
 		for i, argument in enumerate(arguments): 
-			arg_list[str(i+1)] = [ argument.word ]
+			arg_list[str(i+1)] = [ argument ]
 		# Get the non-replaced function body
-		function_body = fn_dict[node.parts[0].word]
+		
+		function_body = fn_dict[node.parts[0].word]		# fn_repl_dict is indexed by a string encoded path to the node to replace
+		
 		# Replace the arguments in the function body and save result to fn_replace_dict
-		# fn_repl_dict is indexed by a string encoded path to the node to replace
 		bodies_replaced = replace_variables(function_body, arg_list)
 		fn_repl_dict[' '.join([str(x) for x in vstr.path])] = bodies_replaced		# encode path as string cause lists are unhashable
+
 		return CONT					# Investigate nested function calls and see if we can put DONT_DESCEND here
 
 	def replace_bodies(node, vstr, fn_repl_dict):
@@ -85,7 +81,7 @@ def resolve_functions(node, fn_dict):
 					if not len(path):		# if there is no path then nodes[j] is the node getting repalced
 						vstr.nodes[j] = NodeVisitor(body).justify()
 						continue
-					
+
 					delta = 0													# Amount we need to shift the tree after repalcement
 
 					parent = vstr.at_path(vstr.nodes[j], path[:-1])
@@ -101,7 +97,7 @@ def resolve_functions(node, fn_dict):
 					while body.parts[-1].kind == 'operator': 					# parser automatically removes extra '\n', ';', etc so we must as well. list probably ends with one (who starts next line after function inline?)
 						body.parts = body.parts[:-1]
 					new_children += body.parts									# Add the new body elements to the new_children list (remember the body is a list node of commands for ease of programming)
-					
+
 					# Align and add all the children after the function call. Other than alignment, there is no change to these nodes
 					end_of_original_children = NodeVisitor(parent).children()[path[-1]+1:]
 					delta += -end_of_original_children[-1].pos[1]
@@ -117,10 +113,20 @@ def resolve_functions(node, fn_dict):
 					vstr.nodes[j] = expand_ast_along_path(vstr.nodes[j], path[:-1], delta)
 					path_to_shift_right_of = path[:-1] + [ len(new_children) ]
 					vstr.nodes[j] = shift_ast_right_of_path(vstr.nodes[j], path_to_shift_right_of, delta)
-					
+
 		return vstr.nodes
 
 	fn_repl_dict = {}
 	vstr = NodeVisitor(node)
 	vstr.apply(build_body_replacements, vstr, fn_dict, fn_repl_dict)
 	return replace_bodies(node, vstr, fn_repl_dict)
+
+
+def build_and_resolve_fns(nodes, fn_dict={}):
+	""" Helpful wrapper """
+	new_nodes = []
+	for node in nodes: 
+		fn_dict = build_fn_table(node, fn_dict)
+		new_nodes += resolve_functions(node, fn_dict)
+	return new_nodes
+	

@@ -2,7 +2,9 @@ import bashlex, copy
 from bashparse.ast import NodeVisitor
 from bashparse.ast import CONT, DONT_DESCEND
 
+
 cmd_creates_aliasing = { 'mv', 'cp' }
+
 
 def build_alias_table(node, alias_table = {}):
     """ Takes a node, checks to see if its moving a file. If it is, you could be using cmd aliasing.
@@ -43,6 +45,7 @@ def build_alias_table(node, alias_table = {}):
     NodeVisitor(node).apply(apply_fn, alias_table)
     return alias_table
 
+
 def resolve_aliasing(node, alias_table = {}):
     """ This function replaces the command text of any command alias specified in the alias table 
         with the name of the function truly being executed. """
@@ -78,7 +81,6 @@ def resolve_aliasing(node, alias_table = {}):
         return [ node ]
     
     return NodeVisitor(node).replace(cmd_alias_qual_fn, {'alias_table':alias_table}, cmd_alias_gen_fn, {'alias_table':alias_table})
-
 
 
 def build_and_resolve_aliasing(nodes, alias_table={}):

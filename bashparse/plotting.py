@@ -6,7 +6,6 @@ plotting_values = []  # This should remain empty
 
 
 for FILE in files:
-    print('file: ', FILE)
     nodes = bashparse.parse(open(FILE).read())
     raw_score = metric.calculate_raw_file_score(nodes)
     weighted_score = metric.calculate_weighted_file_score(nodes)
@@ -17,10 +16,8 @@ for FILE in files:
 
 
 plotting_values.sort()
-print('pv: ', plotting_values)
 
 x_axis = list(range(1, len(plotting_values)+1))
-print('xa: ', len(x_axis))
 
 plt.plot(x_axis, plotting_values, marker="o")
 plt.ylabel('Complexity')

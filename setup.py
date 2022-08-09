@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="bashparse",
     version="0.1",
-    author="YOU",
+    author="Spencer Stingley",
     author_email="sstingle@usc.edu",
     description="A tool for analysing and deobfuscating bash scripts",
     long_description=long_description,

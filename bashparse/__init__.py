@@ -4,8 +4,11 @@ import bashlex
 parse = bashlex.parse
 
 node = bashlex.ast.node
-
 NodeVisitor = ast.NodeVisitor
+
+DONT_DESCEND = ast.DONT_DESCEND
+CONT = ast.CONT
+HALT = ast.HALT
 
 
 
@@ -35,7 +38,7 @@ build_and_resolve_aliasing = commands.build_and_resolve_aliasing
 
 
 
-update_variable_list_with_node = variables.update_variable_list_with_node  
+update_variable_list = variables.update_variable_list
 
 substitute_variables = variables.substitute_variables  
 	
@@ -52,10 +55,21 @@ build_fn_table = functions.build_fn_table
 resolve_functions = functions.resolve_functions
 
 
+strip_cmd = unroll.strip_cmd
+
+advanced_unroll = unroll.advanced_unroll
+
+
+
+Chunk = chunk.Chunk
+
+find_variable_chunks = chunk.find_variable_chunks
+
+find_cd_chunks = chunk.find_cd_chunks
+
 
 # Bashtemplate 
 
-Chunk = chunk.Chunk
 
 Template = template.Template
 # The object class
@@ -73,10 +87,7 @@ filter_templates = \
 
 
 
-# bashunroll
 
-basic_unroll = unroll.basic_node_unroll
-replacement_unroll = unroll.replacement_based_unroll
 
 
 
@@ -97,11 +108,11 @@ replacement_unroll = unroll.replacement_based_unroll
 
 # return_commands_from_for_loops = commands.return_commands_from_for_loops
 
-#shift_tree_pos = ast.shift_ast_pos
+# shift_tree_pos = ast.shift_ast_pos
 	
-#shift_tree_pos_to_start = ast.shift_ast_pos_to_start
+# shift_tree_pos_to_start = ast.shift_ast_pos_to_start
 
-#return_variable_paths = ast.return_variable_paths
+# return_variable_paths = ast.return_variable_paths
 
 # return_paths_to_node_type = ast.return_paths_to_node_type
 

@@ -1,10 +1,5 @@
-import bashparse, copy
-
-
-# This could be an interesting idea
-def visit_children(nodes, function):
-    pass
-
+import bashparse, copy, bashlex
+from bashparse.ast import NodeVisitor, CONT, DONT_DESCEND
 
 class Chunk:
     def __init__(self, variable_name, start, end):
@@ -33,61 +28,33 @@ class chunk_connection:
         return "chunk_connection(chunk: " + str(self.chunk) +' connected to: ' + str(self.connected_to) + ')'
 
 
-def are_variables_involved(nodes):
-    if type(nodes) != list: nodes = [nodes]
-    for i in range(0, len(nodes)):
-        if nodes[i].kind == 'assignment': return True
-        if nodes[i].kind == 'parameter': return True
-        # Don't need to check if lower uses vars, if it is confirmed in upper
-        if hasattr(nodes[i], 'parts'): 
-            for part in nodes[i].parts:
-                result = are_variables_involved(part)
-                if result: return result
-        if hasattr(nodes[i], 'list'):
-            for part in nodes[i].list:
-                result = are_variables_involved(part)
-                if result: return result
-        if hasattr(nodes[i], 'command'):  # some nodes are just pass through nodes
-            result = are_variables_involved(part)
-            if result: return result
-        if hasattr(nodes[i], 'output'):   # some nodes are just pass through nodes
-            result = are_variables_involved(part)
-            if result: return result
-    return False
-
-
-def return_variable_commands(nodes):
-    to_return = []
-    for node in nodes:
-        if are_variables_involved(node):
-            to_return += [copy.deepcopy(node)]
-    return to_return
-
-
 def find_variable_chunks(nodes):
     if type(nodes) is not list: nodes = [nodes]
-    chunks = {}
+
+    def apply_fn(node, vstr, chunk_index, node_num):
+        full_path = [ node_num ] + vstr.path
+        if node.kind == 'assignment':
+            name = node.word.split('=', maxsplit=1)[0]
+            if name not in chunk_index:
+                new_chunk = Chunk(name, start=full_path, end=None)
+                chunk_index[name] = [new_chunk]     # We use an array here cause there could be multiple chunks per variable
+            else:
+                chunk_index[name][-1].end = full_path
+                new_chunk = Chunk(name, start=full_path, end=None)
+                chunk_index[name] += new_chunk
+        if node.kind == 'parameter':
+            name = node.value
+            if name in chunk_index:   # check to see if variable has been declared
+                chunk_index[name][-1].end = full_path[:-1]   # This is going to update every time. Also path should be to word node not param node (imo)
+                # A condition could be added here to iterate up the path until we hit a command node or an equivalent. But not useful quite yet
+        return CONT
+
+    chunk_index = {}
     for i, node in enumerate(nodes):
-        assignments = bashparse.return_paths_to_node_type(node, 'assignment')
-        evaluations = bashparse.return_variable_paths(node)
+        vstr = NodeVisitor(node)
+        vstr.apply(apply_fn, vstr, chunk_index, node_num = i)
 
-        for assignment in assignments:
-            name = assignment.node.word.split('=')[0]
-            if name not in chunks: chunks[name] = []
-            chunks[name] += [Chunk(name, [i] + assignment.path, [i] + assignment.path)]
-            # chunks[name] += [Chunk(name, [i], None)]
-
-        for evaluation in evaluations:
-            name = evaluation.node.value
-            j = 0
-            while name in chunks and j < len(chunks[name]):
-                if chunks[name][j].start > [i] + evaluation.path: break
-                j += 1
-
-            if j >= 0 and name in chunks: 
-                chunks[name][j - 1].end = [i] + evaluation.path
-            elif j < 0: raise ValueError('finding the chunk went negative. idk how')
-    return chunks
+    return [j for i in list(chunk_index.values()) for j in i]   # sweet sweet list comprehension
 
 
 def find_cd_chunks(nodes):
@@ -184,20 +151,8 @@ def easy_nuclear_slicing(nodes):
 
     return chunks
 
-def search_engine_slicing_method(nodes):
 
-    chunks = []
-    
-    # Do Stuff
-
-    return chunks
-
-
-
-def run_identify_chunks(nodes):
-    return identify_variable_chunks(nodes)
-
-
+"""
 def identify_variable_chunks(nodes):
     # This is just going to grab chunk indexes based on the variable locations
     chunks = []
@@ -212,11 +167,7 @@ def identify_variable_chunks(nodes):
     chunks += cd_chunks
     
     return chunks
-
-
-
-
-
+"""
 
 # filename="testing.sh"
 

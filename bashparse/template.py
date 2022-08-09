@@ -41,7 +41,7 @@ def run_generate_templates(chunks, nodes):
     for slce in chunks:
         text = ''
         for i in range(slce.start[0], slce.end[0] + 1):
-            text += bashparse.convert_tree_to_string(nodes[i]) + ' ; '
+            text += str(NodeVisitor(nodes[i])) + ' ; '
         text = text[:-1]
         new_template = Template(text = text, chunks = [ slce ], ratio = ( ( slce.end[0] - slce.start[0] + 1 ) / len(nodes) ), raw_count = 1)
         if new_template not in templates: templates += [ copy.deepcopy(new_template) ]

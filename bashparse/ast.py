@@ -1,9 +1,11 @@
-# from bashparse.path_variable import path_variable
-import bashlex, copy
+import bashlex, copy, bashparse
+from ordered_set import OrderedSet
+
 
 CONT = 0
 DONT_DESCEND = 1
 HALT = 2
+
 
 class NodeVisitor:
     def __init__(self, root):
@@ -12,9 +14,8 @@ class NodeVisitor:
         self._string = ''
         self._nodes = [ copy.deepcopy(root) ]
         self._accum_deltas = [ 0 ]
-        self._replaced_variables = {}
-        self._variable_replacement_order = []
-        self._replaced_functions = {}
+        self._variable_replacement_order = OrderedSet()
+        self._params_for_removal = []
         self.no_children = {'operator', 'reservedword', 'pipe', 'parameter', 'tilde', 'heredoc'}
         self.parts_children = {'list', 'pipeline', 'if', 'for', 'while', 'until', 'command', 'function', 'word', 'assignment'}
         self.command_children = {'commandsubstitution', 'processsubstitution'}
@@ -56,20 +57,13 @@ class NodeVisitor:
         return 'bashparse.ast.NodeVisitor'      # Praying this is the proper implementation
 
 
-    """ Can be used with apply to locate your position in the ast at any given time """
-    @property
-    def path(self):
-        return self._path
-    @path.setter
-    def path(self, path):
-        self._path = path
-
-
+    """ Used for any indexing purposes when divergent asts are involved and modified when no divergence ops are specified"""
     @property
     def root(self):
         return self._root
 
 
+    """ A list of all divergent asts when doing things like variable replacement  """
     @property
     def nodes(self):
         return self._nodes
@@ -81,9 +75,19 @@ class NodeVisitor:
         self._nodes = nodes
 
 
-    """ replaced_variables, variable_replacement_order, and replaced_functions can be cleaned up """
+    """ Can be used with apply to locate your position in the ast at any given time """
+    @property
+    def path(self):
+        return self._path
+    @path.setter
+    def path(self, path):
+        if type(path) is not list: path = [ path ]
+        for el in path: 
+            if type(el) is not int: raise ValueError('Error! Attribute NodeVisitor.path can only be set to an array of ints')
+        self._path = path
 
-    """ Used When replacing variables. Needed to break self.nodes into slices """
+
+    """ Used When replacing variables. Needed to break self.nodes into slices of replacement chunks """
     @property
     def variable_replacement_order(self):
         return self._variable_replacement_order
@@ -93,25 +97,16 @@ class NodeVisitor:
         self._variable_replacement_order = new_order
 
 
-    """ Used when replacing variables. Allows for multiple replacement in O(n) with proper replacement, not all possible combinations """
+    """ Parameter nodes need to be removed in reverse order to traversal order is the same. 
+        But traversal needs to happen in the forward direction. We use this in replace_variables to 
+        keep track of everywhere we need to remove a parameter """
     @property
-    def replaced_variables(self):
-        return self._replaced_variables
-    @replaced_variables.setter
-    def replaced_variables(self, replaced_variables):   # Do we even need this cause dict?
-        if type(replaced_variables) is not dict: raise ValueError("Error! NodeVisitor.replaced_variables must be a dict")
-        self._replaced_variables = replaced_variables
-
-
-    """ May not be useful as functions should be static blocks. 
-        But in the event we allow for diverging function executions, support is already built in """
-    @property
-    def replaced_functions(self):
-        return self.replaced_functions
-    @replaced_functions.setter
-    def replaced_functions(self, replaced_functions):   # Do we even need this cause set?
-        if type(replaced_functions) is not set: return ValueError("Error! NodeVisitor.replaced_functions must be a set")
-        self.replaced_functions = replaced_functions
+    def params_for_removal(self):
+        return self._params_for_removal
+    @params_for_removal.setter
+    def params_for_removal(self, params_for_removal):   # Do we even need this cause dict?
+        if type(params_for_removal) is not list: raise ValueError("Error! NodeVisitor.params_for_removal must be a dict")
+        self._params_for_removal = params_for_removal
 
 
     """ accumulated_deltas. When dealing with multiple trees in self.nodes, tracking shifts in the ast gets annoying so we do it all at once.
@@ -249,8 +244,6 @@ class NodeVisitor:
         try:
             return children[num]
         except Exception as e:
-            print('root:', node)
-            print('children:', children)
             raise ValueError('Error! NodeVisitor.child #'+str(num)+' does not exist!')
 
 
@@ -300,24 +293,23 @@ class NodeVisitor:
         try:
             old_child = self.child(parent, path[-1])
         except: 
-            print()
-            print('parent:\n'+ parent.dump())
-            print('path:\n', path)
-            print('new child:\n', new_child.dump())
-            print()
             raise ValueError('index into children is not valid')
-        
-        if new_child.pos[0] != old_child.pos[0]:
-            new_child = self.justify(new_child)
-            new_child = self.align(new_child, old_child.pos[0])
+
+
+        """ Move the ast to account for the new node & adjst the new node """
+        self.justify(new_child)
+        self.align(new_child, old_child.pos[0])
+        delta = new_child.pos[1] - old_child.pos[1]
+        bashparse.ast.expand_ast_along_path(root, path[:-1], delta)
+        bashparse.ast.shift_ast_right_of_path(root, path, delta)
 
         k = parent.kind
         num_child_nodes = 0
 
+        """ Actually inject the new child """
         if len(path) == 0:      
             return new_child
         elif k in self.parts_children:
-
             if len(parent.parts) >= path[-1]: 
                 parent.parts[path[-1]] = new_child
         elif k in self.no_children:
@@ -346,6 +338,7 @@ class NodeVisitor:
         else:
             raise ValueError('unknown node kind %r' % k)
         
+        """ Error checking for sanity sake """
         if self.child(parent, path[-1]) != new_child:
             raise ValueError('Error! bashparse.ast.NodeVisitor.replace did not change the node properly')
 
@@ -360,8 +353,7 @@ class NodeVisitor:
         Then when it returns positive, the generator function is run. The generator function must also take a node as its first arg. 
         The generator function needs to return an array of nodes that you would like to replace the current node with.
         This function then replaces all nodes specified by the qualifying function with the nodes generated and returns these nodes 
-        as an array. 
-        """
+        as an array. """
         
         def apply_fn(node, self, qualification_fn, qualification_args, generation_fn, generation_fn_args):
             if qualification_fn(node, **qualification_args):
@@ -382,17 +374,26 @@ class NodeVisitor:
         return self._nodes
 
 
-    def remove(self, root=None, path=None):
+    def remove(self, root=None, path=None, child=None):
         """ Removes the node at path specified from root's tree. Passed in by reference 
-            and returned for good measure. """
+            and returned for good measure. If a child is specified, then the path is actually to the 
+            parent. The child which matches the child passed in is then removed. """
         if root is None: root = self._root
         if type(root) is not bashlex.ast.node: raise ValueError("Error! NodeVisitor.remove(root != bashlex.ast.node)")
         if type(path) is not list: raise ValueError("Error! NodeVisitor.remove(path != list)")
         parent = root
         for i in path[:-1]: parent = self.child(parent, i)
-        p_vstr = NodeVisitor(parent)
-        new_children = p_vstr.children()[:path[-1]] + p_vstr.children()[path[-1]+1:]
-        p_vstr.set_children(parent, new_children)
+        if child is None:
+            p_vstr = NodeVisitor(parent)
+            new_children = p_vstr.children()[:path[-1]] + p_vstr.children()[path[-1]+1:]
+            p_vstr.set_children(parent, new_children)
+        else: 
+            if type(child) is not bashlex.ast.node: raise ValueError("Error! NodeVisitor.remove(child != bashlex.ast.node)")
+            parent = self.child(parent, path[-1])
+            for i, current_child in enumerate(self.children(parent)): 
+                if current_child == child: 
+                    root = self.remove(parent, [i]) 
+                    break
         return root
 
 
@@ -418,7 +419,6 @@ class NodeVisitor:
 
 
 
-
 def expand_ast_along_path(root, path_to_update, delta):
     """ This function expands the pos attribute to the right along a path by amount delta. Useful for variable replacement & updating.
         Updates the value BY REFERENCE """
@@ -427,8 +427,6 @@ def expand_ast_along_path(root, path_to_update, delta):
     if type(delta) is not int: raise ValueError('delta must be an int')
     def apply_fn(node, delta): node.pos = (node.pos[0], node.pos[1] + delta)
     return NodeVisitor(root).apply_along_path(apply_fn, path_to_update, delta).root
-
-
 
 
 def shift_ast_right_of_path(node, path_to_update, delta):
