@@ -133,3 +133,9 @@ class TestVariables(TestCase):
     
     def test_nested_for_loops(self):
         pass
+
+    def test_replace_blanks(self):
+        nodes = bashlex.parse('testingg=$testinggg')
+        expected_results = bashlex.parse('testingg=')
+        actual_results = replace_variables(nodes[0], {}, replace_blanks=True)
+        self.assertTrue(actual_results == expected_results)

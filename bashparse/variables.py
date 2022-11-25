@@ -3,7 +3,7 @@ from bashparse.ast import NodeVisitor, CONT
 import bashlex, copy, re
 
 
-def replace_variables(node, var_list):
+def replace_variables(node, var_list, replace_blanks=False):
     """ Takes a node, var list. Replaces all the instances of variables found in the var_list
         with their corresponding value via regex. var_list IS NOT UPDATED WITH VALUES IN NODE. 
         USE substitute_variables FOR THAT FUNCITONALITY. The identification of a variable is done via the 
@@ -12,7 +12,7 @@ def replace_variables(node, var_list):
         if the value is replace, or kept if not. This means the nodes returned are all valid bashlex nodes. 
         This function also properly shifts the ast to account for any replacements, meaning you shouldn't be able
         to tell if the tree has been replaced or was generated directly from the text. You're welcome, it was hell  """
-    
+
     if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.replace_variables(node != bashlex.ast.node)')
     if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.replace_variables(var_list != dict)')
 
@@ -79,12 +79,17 @@ def replace_variables(node, var_list):
                         raise ValueError("Error! Variable replacement value wasn't a str or node. bashparse.variables.replace_variables")
 
 
-    def apply_fn(node, vstr, var_list):
+    def apply_fn(node, vstr, var_list, replace_blanks=False):
         """ This function only works on parameter nodes in the tree. If there is no parameter 
             then the value is assumed to be a string or escaped in some capacity. Only replace
             the tree with valid bashlex nodes """
         if node.kind != 'parameter': return CONT
-        if node.value not in var_list: return CONT
+        
+        """ If you set equality to a variable that doesn't exist, its a blank value according to bash.
+            So we insert a blank value into the variable list it works just fine. Definitely a hacky workaround 
+            But it hasn't created any bugs yet """
+        if replace_blanks and node.value not in var_list: var_list[node.value] = [ '' ]    
+        if not replace_blanks and node.value not in var_list: return CONT
 
         name = node.value
 
@@ -110,7 +115,7 @@ def replace_variables(node, var_list):
 
 
     vstr = NodeVisitor(node)
-    vstr.apply(apply_fn, vstr, var_list)
+    vstr.apply(apply_fn, vstr, var_list, replace_blanks)
 
     """ Remove all the param nodes that we replaced earlier in the code. 
         This needs to be done in reverse order so that the locations of the parameter nodes, 
@@ -123,7 +128,7 @@ def replace_variables(node, var_list):
     return vstr.nodes
 
 
-def substitute_variables(nodes, var_list = {}):
+def substitute_variables(nodes, var_list = {}, replace_blanks=False):
     """ This function finds and replaces all values found in the list of nodes passed into it. 
         Different from replace_variables which only does the replacement. Returns an array of 
         all the replaced trees using the values found in the nodes and present in the init var_list """
@@ -136,7 +141,7 @@ def substitute_variables(nodes, var_list = {}):
 
     for node in nodes:
         var_list = update_variable_list(node, var_list)
-        to_return += replace_variables(node, var_list)
+        to_return += replace_variables(node, var_list, replace_blanks)
     return to_return
 
 
@@ -179,7 +184,7 @@ def add_variable_to_list(var_list, name, values):
     return var_list
 
 
-def update_var_list_with_for_loop(for_node, var_list):
+def update_var_list_with_for_loop(for_node, var_list, replace_blanks=False):
     """ This function takes a for_loop node and a variable list. It updated the value of the var_lits
         with the value that the for loop assigned to the iterator. This value could be a string, another variable, 
         or a command substitution. All cases are covered here. If another variable is specified, the value assigned 
@@ -209,7 +214,7 @@ def update_var_list_with_for_loop(for_node, var_list):
                 if part.kind == 'parameter':
                     variable_value += var_list [ part.value ]
                 if part.kind == 'commandsubstitution':
-                    value_nodes = substitute_variables(part, var_list)
+                    value_nodes = substitute_variables(part, var_list, replace_blanks)
                     for value_node in value_nodes: 
                         variable_value += [ str(NodeVisitor(value_node)) ]
         value_index += 1

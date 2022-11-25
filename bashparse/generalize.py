@@ -7,7 +7,7 @@ def run_generalize_nodes(generalize_nodes):
 
 
 def basic_generalization(generalize_nodes):
-    # Basic replacement. 
+    # Basic replacement.
     # Variables are not taken into account in this one
     # The use of local is not accounted for with this
     if type(generalize_nodes) is not list: generalize_nodes = [ generalize_nodes ]

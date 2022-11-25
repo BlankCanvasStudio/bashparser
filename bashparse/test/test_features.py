@@ -34,5 +34,5 @@ class TestFeatures(TestCase):
 		for node in unrolled_nodes:
 			var_list = bpvar.update_variable_list(node, var_list)
 			actual_results += bpvar.replace_variables(node, var_list)
-		
+
 		self.assertTrue(expected_results == actual_results)

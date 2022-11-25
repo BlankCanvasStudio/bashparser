@@ -60,7 +60,7 @@ def resolve_functions(node, fn_dict, var_list = None):
 			all the functions specified in the keys of fn_repl_dict with the commands present in the 
 			list node of the key's corresponding value. Allows for multiple function bodies to replace 
 			a single function call. Useful for analysis. """
-		
+
 		for path, bodies in reversed(fn_repl_dict.items()):	# We need to iterate this backwards so the index doesn't change 
 			if len(path):
 				path = [int(x) for x in path.split(' ')]			# lists are unhashable so we converted it to a space separated string
