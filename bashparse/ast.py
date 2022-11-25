@@ -19,7 +19,7 @@ class NodeVisitor:
         self.no_children = {'operator', 'reservedword', 'pipe', 'parameter', 'tilde', 'heredoc'}
         self.parts_children = {'list', 'pipeline', 'if', 'for', 'while', 'until', 'command', 'function', 'word', 'assignment'}
         self.command_children = {'commandsubstitution', 'processsubstitution'}
-        self.passable_nodes = {'command', 'list', 'compound', 'for', 'parameter', 'function'}
+        self.passable_nodes = {'command', 'list', 'compound', 'for', 'parameter', 'function', 'pipeline'}
         self.list_children = {}
         self.contains_variable_text = {'word', 'assignment'}
 
@@ -33,6 +33,7 @@ class NodeVisitor:
             word = ''
             if node.kind in self.passable_nodes: return CONT
             elif node.kind == 'operator': word = node.op
+            elif node.kind == 'pipe': word = node.pipe
             elif node.kind == 'commandsubstitution': 
                 word = '$('
                 cmd = node.command
@@ -45,6 +46,7 @@ class NodeVisitor:
 
             elif hasattr(node, 'word'): word = node.word 
             else: 
+                print('node: ', node.dump())
                 raise ValueError('Error! Unsupported node kind encountered when converting NodeVisitor to string: ', node.kind)
             self._string = self._string + word + ' '
             return CONT
