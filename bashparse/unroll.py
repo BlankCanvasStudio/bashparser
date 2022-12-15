@@ -38,8 +38,8 @@ def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}):
 
 	nodes = bashparse.build_and_resolve_fns(nodes, fn_dict)
 
-	nodes = substitute_variables(nodes, var_list)
+	nodes = bashparse.substitute_variables(nodes, var_list)
 
-	commands = strip_cmd(replaced_nodes)
+	commands = strip_cmd(nodes)
 
 	return commands
