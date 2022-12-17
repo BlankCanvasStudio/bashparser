@@ -1,46 +1,194 @@
 # bashparse: A python library for bash file interpretation
 
-bashparse is a python library containing a number of helpful tools to analyze bash scripts.
+<br/>
 
-## Dependencies
-
+# Dependencies
     This package only depends on bashlex
 
-## Usage
+<br/>
 
+# Definitions
+- Node: The AST representation of a line of bash code
+- Line of Bash Code: Any sequece of valid bash which, when typed into the terminal, will return a fresh command entry line
+
+<br/>
+
+# Usage
 ast.py
 
-The first and most important object to understand is the NodeVisitor. This object is used to manipulate bashlex.ast.node objects. Bashlex.ast.nodes are a single construct from the bash programming language. If a single command is issued, then the node will be just that command. If a for loop is used, then a node will be the entire for loop and any command executed in the body of that loop.
+The funamental "unit" used in this package is the node, the AST of a valid line of bash code.
 
-A NodeVisitor is declared using the syntax: var_name = NodeVisitor(root) where root is the bashlex.ast.node you would like to manipulate. 
+You can create and print bashparse nodes as follow:
+    
+    import bashparse
 
-When converted to a string, the NodeVisitor prints a formatted version of the root specified during the declaration.
+    bash_code = "Echo Hello World"
+    nodes = bashparse.parse(bash_code)
 
-The most imporant property of the node visitor is the apply() function. apply() takes the function you would like to execute on every node in NodeVisitor.root as its first argument and any further arguments passed in will be passed into the function you defined using *args and **kwargs.
-This function can do anything but the easiest implementation is usually a FSM. It allows you to easily extract and manipulate data within the ast, while abstracting far enough away from the ast that you don't need to worry about writing graph algorithms. apply() comes with 3 return values which allow users to manipate the traversal of the tree. If your defined function returns bashparse.ast.CONT (or nothing), apply() will continue iterating over the tree. If bashparse.ast.DONT_DESCEND is returned, apply() will continue execute but will skip all children of the current node. If bashparse.ast.HALT is returned, apply() will return immediately without visiting any other nodes. 
+    for node in nodes:
+        print(node.dump())
 
-The functions you tend to write will result in a multitude of different ASTs. A simple example of this is for loop iterator replacement. Replacing the values in "for i in (a b c)" returns 3 asts with i=a,i=b, and i=c. In a much more complex senario, like nested for loops, one can see how quickly the problem becomes non-trivial. To cope with this, a very simple approach is taken: you will traverse over the given root node and index relative to this root node. This means you can have consistent indexing even with divergent ast manipulationg paths. The NodeVisitor.nodes are actually whats operated on and when multiple nodes are returned from a function, it is simply returning NodeVisitor.nodes. If the operation cannot return multiple ASTs then the operation is performed on NodeVisitor.root or a node passed in as an argument. 
-The reason for doing this is that the divergent trees make it difficult to talk about arbitrarily branching paths, all occuring somewhat simultaneously. This means when you replace a node, it must be the final version of the node, as it will not be visited during that iteration of the apply() function. 
-The apply function comes in 3 helpful variants: apply_along_path, apply_left_of_path, and apply_right_of_path. These functions can be built with the apply function but are useful enough to be included separately.
 
-The NodeVisitor allows you to return specific nodes, by reference, from the NodeVisitor.root object using the at_path() member function. You can also pass in a node you would like to draw from by specifying the node parameter on call. 
-The NodeVisitor can return the children of the root node or a specified node with the function children(). This has an optional node parameter, which will be used over NodeVisitor.root when returning children. 
-The NodeVisitor also gives a number system to the children, allowing you to refer to child #3 consistently and without concern for how the nodes are nested under the parent. 
-The set_children() function allows the children of a node to be set. If no parent is passed in, then NodeVisitor.root is assumed to be the parent referenced.
-The swap_node function allows the user to switch a node at a specfied path of the passed in root with a node also passed into the function. This function will automatically adjust the pos attribute of the nodes, so no user intervention is needed to create a valid AST.
+bashparse.parse() will parse text input text and return a node for each line present in the text. bashparse.parse() will always return an array of nodes, even if only 1 line of code is provided. 
 
-The replace function: This function is going to sound really weird but its more useful than you think. You can pass in a "qualifying function" and its arguments as a dictionary. This function needs to take a node as its first argument. It needs to return true wherever in the ast you'd like to replace a node and false everywhere else. You can pass the node visitor calling .replace() into the qualification function to get information & tooling. Then when it returns positive, the generator function is run. The generator function must also take a node as its first arg. The generator function needs to return an array of nodes that you would like to replace the current node with.This function then replaces all nodes specified by the qualifying function with the nodes generated and returns these nodes as an array.
+Manipulating these nodes can be cumbersome and unintuitive, due to the grammar definitions used in the bash langauage. This package eases this learning curve by introducing the NodeVisitor object. 
 
-The remove() function can be used in 2 two ways. First, if no child is specified then the node at the end of the path specified will be removed from the AST. If a child is specified, then the path is assumed to be to the parent and the first child which matches that node will be removed. 
+A NodeVisitor should be associated with a single node, specified in the declaration. The node can be accessed via the 'root' property of the NodeVisitor. 
 
-The align funciton adjusts the pos attribute of all nodes by the amount specified in delta.
+You delcare a NodeVisitor as follows:
 
-The justify function shifts the AST so that it starts from zero.
+    import bashparse
 
-expand_ast_along_path applies align along a uer justified path. 
+    bash_code = "Echo Hello World"
+    nodes = bashparse.parse(bash_code)
 
-shift_ast_right_of_path applies align to the right of the specified path
+    vstr = NodeVisitor(nodes[0])
 
+NodeVisitors can also help convert nodes back into their string form as follows:
+
+    import bashparse
+    from bashparse import NodeVisitor
+
+    bash_code = "Echo Hello World"
+    node = bashparse.parse(bash_code)[0]
+
+    vstr = NodeVisitor(node)
+    bash_code_2 = str(vstr)
+    
+    print(bash_code_2)
+
+Which returns "Echo Hello World", truly thrilling. This is very helpful for converting modified asts into their string forms, as they are significantly easier to understand. 
+
+<br/>
+<br/>
+
+# AST Children
+
+All nodes can have children, tucked into various attributes such as 'list', 'part', and 'command', amoung others. Bashparse alleviates the need to remember all these attributes and which nodes they belong to with the Nodevisitor.children(), NodeVisitor.child(), and NodeVisitor.set_children() functions.
+
+**NodeVisitor.children(node = None)** : Returns an array of bashlex nodes which are nested under the specified node. If no node is specified, the root node of the NodeVisitor is used instead.
+
+**NodeVisitor.children(node = None, num = 0)** : Returns a single node nested under node at position num. If no node is specified, the root node of the NodeVisitor is used. 
+
+**NodeVisitor.set_children(parent=None, children=None)** : Takes array of children nodes and optional parent node. Updates the correct child attribute of the parent to the specified children. If no parent node is specified, the root node is used.
+
+
+<br/>
+<br/>
+
+# NodeVisitor.apply(func, *args, **kwargs)
+By far the biggest improvement the bashparse package introduces is the funciton NodeVisitor.apply(). This function allows users to easily write custom functions to apply to the ast. In fact, its the funciton which underlies all the other functionality introduced in this package. The basic premise of the apply function is it provides the user with the ability to call any function on every node in the graph.
+
+The arguments to the apply function are:
+
+- a function to be called on every node
+- optional arguments passed to the function
+
+
+**Function Definition**
+
+The function passed into the apply function have 2 requirements. First, **the function must take the current node its operating on as its first argument**. And second, the function should return any of the following return values: 
+
+- bashparse.CONT (return this value to continue iterating down the AST)
+- bashparse.HALT (return this value to stop iterating the tree immediately)
+- bashparse.DONT_DESCEND (return this value to prevent the function from iterating over the children of the current node)
+
+**Use Cases**
+
+The apply function can be used however you'd like, but there are a few facilities built into bashparse to encourage a specific programming paradigm. Many of you are probably familiar with this paradigm: the finite state machine. 
+
+When building finite state machines to iterate over and manipulate the AST, one of the first things you will want to do is replace nodes in the AST. This can be done very simply with the NodeVisitor.swap_node() function, but for the sake of example we will talk through using NodeVisitor.apply() to do this replacement. 
+
+Lets say, for the sake of example, you'd like to replace 1 deeply nested node in the AST with 2 different nodes and return both of these results. Bashparse has the facilities to do this with the apply function for any node combinations you could imagine. But creating a generalized algorithm comes with one major issue: how do you navigate two different trees that could have very different structures after replacement? The answer: you don't. Instead, bashparse opts to naviagate only to nodes present in the original AST using in the NodeVisitor declaration. If you'd like to traverse the new trees nodes, please create a new NodeVisitor. This is a very fundamnetal aspect of the bashparse package mentioned above: A NodeVisitor is declared for a single ast. 
+
+To get around this limitation the NodeVisitor comes with 3 handy attributes: the NodeVisitor.path() property, the NodeVisitor.nodes() getter, and the NodeVisitor.nodes() setter. The NodeVisitor.path() property will tell you where in the AST you are currently located (relative to the original AST). And the NodeVisitor.nodes() getter and setter can be used to manage diverging AST with ease. 
+
+An incredibly useless, but nonetheless informative, implementation of this program could look something like this:
+
+    import bashparse, copy
+
+    def apply_fn(node, vstr, path, new_nodes):
+        if vstr.path === [ 1, 2 ]:
+            vstr.nodes = []
+            node_copies = [ copy.deepcopy(vstr.root), copy.deepcopy(vstr.root) ]
+            for i, nc in enumerate(node_copies):
+                vstr2 = bashparse.NodeVisitor(nc)
+                vstr2.swap_node(new_nodes[i])
+                vstr.nodes += [ vstr2.root ]
+    
+    vstr1 = bashparse.NodeVisitor(node)
+    vstr1.apply(apply_fn, vstr1, some_path, some_new_nodes)
+    
+    for node in vstr1.nodes():
+        print(node.dump())
+
+This example is very poorly written but shows how the NodeVisitor.apply(), NodeVisitor.path(), and NodeVisitor.nodes() properties can be used. For a significantly more useful example, the implementation of the __str__ property is listed below: 
+
+    def __str__(self):
+        """ Don't let it save itself, always recompute. Much easier than changing every time """
+        self._string = ""
+        
+        def apply_fn(node):
+            k = node.kind
+            word = ''
+            if node.kind in self.passable_nodes: return CONT
+            elif node.kind == 'operator': word = node.op
+            elif node.kind == 'pipe': word = node.pipe
+            elif node.kind == 'commandsubstitution': 
+                word = '$('
+                cmd = node.command
+                for part in cmd.parts:
+                    word += str(NodeVisitor(part)) + ' '
+                word = word[:-1] + ')'
+                self._string = self._string + word + ' '
+                
+                return DONT_DESCEND
+
+            elif hasattr(node, 'word'): word = node.word 
+            else: 
+                print('node: ', node.dump())
+                raise ValueError('Error! Unsupported node kind encountered when converting NodeVisitor to string: ', node.kind)
+            self._string = self._string + word + ' '
+            return CONT
+
+        self.apply(apply_fn)
+        return self._string[:-1]     # remove trailing space cause wrong
+
+If you would like to see a more complex example, which actively highlights why the package was built in this way, I recommend reading bashparse.variables.replace_variables. Its an algorithm for arbitrary variable replacement in bashscripts and hightlights the importance of these different features. 
+
+<br/>
+
+# NodeVisitor Function Descriptions
+
+With this detail description of the apply function out of the way, now its time for the easy part of the documentation: function descriptions. NodeVisitors are instantiated relative to a single AST, as such all of these functions act on and update the root node by default. It can, however, be useful to call these functions on a single node without declaring a new NodeVisitor. To help with this, most functions take a 'root' parameter which can be used in place of NodeVisitor.root. This is not a feature for NodeVisitor.apply() or any variations on the apply function listed below.  
+
+**NodeVisitor.parent()** - A useful but dangerous property. In apply() it can be used to return the current parent if the NodeVisitor is passed into the function.
+
+**NodeVisitor.apply(apply_fn, \*args, \*\*kwargs)** - This function tries to run apply_fn(*args, **kwargs) on every node in the ast using a depth first search (L to R). By returning CONT, DONT_DESCEND, or HALT from apply_fn you can affect the traversal through the ast. 
+
+**NodeVisitor.apply_along_path(apply_fn, path, \*args, \*\*kwargs)** - Applies a function along a path. Acts just like apply but on a path 
+
+**NodeVisitor.apply_right_of_path(apply_fn, path, \*args, \*\*kwargs)** - Like apply but it only acts on the right side of the path specified. Exclusive of the path itself 
+
+**NodeVisitor.apply_left_of_path(apply_fn, path, \*args, \*\*kwargs)** -  Like apply but it only acts on the left side of the path specified. Exclusive of the path itself 
+
+**NodeVisitor.at_path(root = self.root, path=self.path)** - Returns BY REFERENCE the node a path specified from the root passed in 
+
+**NodeVisitor.children(root = self.root)** - Returns an array of all the children of either the root passed in or the root node of NodeVisitor if none specified. If there are no children, an empty array is returned
+
+**NodeVisitor.child(root = self.root, num = 0)** - Returns the child with number specified by argument (ie can return the 3rd child of the root node (helpful for path finding)
+
+**NodeVisitor.set_children(root = self.root, children = [])** - Takes a root bashlex.ast.node and an array of bashlex.ast.node children. Returns the new node & children combo. Technically, BY REFERENCE not copy
+
+**NodeVisitor.swap_node(child, root = self.root, path = self.path)** - This replaces the node at the path specified with the child passed in both of these actions are BY REFERENCE "
+
+**NodeVisitor.replace(qual_fn, qual_fn_args, gen_fn, gen_fn_args)** - This function is going to sound really weird but its more useful than you think You can pass in a "qualifying function" and its arguments as a dictionary. This function needs to take a node as its first argument. It needs to return true wherever in the ast you'd like to replace a node and false everywhere else. You can pass the node visitor calling .replace() into the qualification function to get information & tooling. Then when it returns positive, the generator function is run. The generator function must also take a node as its first arg. The generator function needs to return an array of nodes that you would like to replace the current node with. This function then replaces all nodes specified by the qualifying function with the nodes generated and returns these nodes as an array.
+
+**NodeVisitor.remove(root = self.root, path = None, child = child at current path)** - Removes the node at path specified from root's tree. Passed in by reference and returned for good measure. If a child is specified, then the path is actually to the parent. The child which matches the child passed in is then removed. 
+
+**NodeVisitor.align(root = self.root, delta = None)** - This function shifts the pos attr of all nodes in self._root or node passed in by delta BY REFERENCE and returns the node for good measure
+
+**NodeVisitor.justify(root = self.root)** - This function shifts the ast so it starts at zero. Basic wrapper around align.
 
 
 commands.py

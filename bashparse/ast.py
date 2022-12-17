@@ -249,11 +249,11 @@ class NodeVisitor:
             raise ValueError('Error! NodeVisitor.child #'+str(num)+' does not exist!')
 
 
-    def set_children(self, root=None, children=None):
+    def set_children(self, root=None, children=[]):
         """ Takes a root bashlex.ast.node and an array of bashlex.ast.node children.
             Returns the new node & children combo. Technically, BY REFERENCE not copy """
         if root is None: root = self._root
-        if type(children) is not list: raise ValueError("NodeVisitor.children must be set to array of bashlex.ast.nodes")
+        if type(children) is not list: children = [ children ]
         for tmp_n in children: 
             if type(tmp_n) is not bashlex.ast.node: raise ValueError("NodeVisitor.children must be set to array of bashlex.ast.nodes")
         
