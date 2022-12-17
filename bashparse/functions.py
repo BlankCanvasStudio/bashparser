@@ -2,14 +2,19 @@ from bashparse.variables import replace_variables
 from bashparse.ast import NodeVisitor, shift_ast_right_of_path, expand_ast_along_path
 from bashparse.ast import CONT, DONT_DESCEND
 import bashparse.ast as bpast
-import copy
+import copy, bashlex
 
 
-def build_fn_table(node, fn_dict={}):
+def build_fn_table(nodes, fn_dict={}):
 	""" Iterates over the node looking for any function definitions. If one is found its added to the function 
 		dictionary with index of funciton name and a value of the list node present in between the brackets.
 		This allows for eaier argument replacement later (pass in list node rather than array of commands).
 		Returns the function dictionary for good measure but acts BY REFERENCE """
+	if type(nodes) is not list: nodes = [ nodes ]
+	for node in nodes:
+		if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.functions.build_fn_table(node != bashlex.ast.node)')
+	if type(fn_dict) is not dict: raise ValueError('Error! bashparse.functions.build_fn_table(fn_dict != dict)')
+
 	def apply_fn(node, vstr, fn_dict):
 		if node.kind != 'function': return CONT
 		compound_node = node.parts[-1]		# The last node is the body of the function
@@ -21,12 +26,19 @@ def build_fn_table(node, fn_dict={}):
 		fn_cmds = copy.deepcopy(compound_node).list[1:-1][0]		# Brackets are 1st & last elements. The center element is a list node containing all the commands to be executed
 		fn_cmds = NodeVisitor(fn_cmds).justify()
 		fn_dict[node.parts[0].word] = fn_cmds					# node.parts[0] is the function's name				
-	vstr = NodeVisitor(node)
-	vstr.apply(apply_fn, vstr, fn_dict)
+	for node in nodes:
+		vstr = NodeVisitor(node)
+		vstr.apply(apply_fn, vstr, fn_dict)
 	return fn_dict
 
 
-def resolve_functions(node, fn_dict, var_list = None):
+def resolve_functions(nodes, fn_dict, var_list = None):
+	if type(nodes) is not list: nodes = [ nodes ]
+	for node in nodes:
+		if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.resolve_functions.build_fn_table(node != bashlex.ast.node)')
+	if type(fn_dict) is not dict: raise ValueError('Error! bashparse.resolve_functions.build_fn_table(fn_dict != dict)')
+	if var_list is not None and type(var_list) is not dict: raise ValueError('Error! bashparse.functions.resolve_functions(var_list != dict)')
+	
 	def build_body_replacements(node, vstr, fn_dict, fn_repl_dict, var_list = None):
 		""" Finds all the function calls in node, takes in the arguments, replaces all
 			arguments in the function body, and saves the pathation where it should 
@@ -116,17 +128,26 @@ def resolve_functions(node, fn_dict, var_list = None):
 
 		return vstr.nodes
 
-	fn_repl_dict = {}
-	vstr = NodeVisitor(node)
-	vstr.apply(build_body_replacements, vstr, fn_dict, fn_repl_dict)
-	return replace_bodies(node, vstr, fn_repl_dict)
+	to_return = []
+	for node in nodes:
+		fn_repl_dict = {}
+		vstr = NodeVisitor(node)
+		vstr.apply(build_body_replacements, vstr, fn_dict, fn_repl_dict)
+		to_return += replace_bodies(node, vstr, fn_repl_dict)
+	return to_return
 
 
-def build_and_resolve_fns(nodes, fn_dict={}):
+def build_and_resolve_fns(nodes, fn_dict = {}, var_list = None):
 	""" Helpful wrapper """
+	if type(nodes) is not list: nodes = [ nodes ]
+	for node in nodes:
+		if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.resolve_functions.build_and_resolve_fns(node != bashlex.ast.node)')
+	if type(fn_dict) is not dict: raise ValueError('Error! bashparse.resolve_functions.build_and_resolve_fns(fn_dict != dict)')
+	if var_list is not None and type(var_list) is not dict: raise ValueError('Error! bashparse.functions.build_and_resolve_fns(var_list != dict)')
+	
 	new_nodes = []
 	for node in nodes: 
 		fn_dict = build_fn_table(node, fn_dict)
-		new_nodes += resolve_functions(node, fn_dict)
+		new_nodes += resolve_functions(node, fn_dict, var_list)
 	return new_nodes
 	
