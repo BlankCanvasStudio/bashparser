@@ -6,13 +6,15 @@ from bashparse.ast import CONT, DONT_DESCEND
 cmd_creates_aliasing = { 'mv', 'cp' }
 
 
-def build_alias_table(node, alias_table = {}):
+def build_alias_table(nodes, alias_table = {}):
     """ Takes a node, checks to see if its moving a file. If it is, you could be using cmd aliasing.
         These aliases get recorded in alias_table dict. In the event there is nested aliasing, the value
         in the alias table is the most nested value (if that makes sense). 
         Acts BY REFERENCE and returns for good measure. Can be used to expand already existing alias table """
 
-    if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.build_alias_table(node != bashlex.ast.node)')
+    if type(nodes) is not list: nodes = [ nodes ]
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.build_alias_table(node != bashlex.ast.node)')
     if type(alias_table) is not dict: raise ValueError('Error! bashparse.build_alias_table(alias_table != dict)')
 
     def apply_fn(node, alias_table):
@@ -42,14 +44,21 @@ def build_alias_table(node, alias_table = {}):
         # Children of a command node are not further children. Only word & parameter nodes
         return DONT_DESCEND
 
-    NodeVisitor(node).apply(apply_fn, alias_table)
+    for node in nodes:
+        NodeVisitor(node).apply(apply_fn, alias_table)
     return alias_table
 
 
-def resolve_aliasing(node, alias_table = {}):
+def resolve_aliasing(nodes, alias_table = {}):
     """ This function replaces the command text of any command alias specified in the alias table 
         with the name of the function truly being executed. """
     
+    if type(nodes) is not list: nodes = [ nodes ]
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.resolve_aliasing(node != bashlex.ast.node)')
+    if type(alias_table) is not dict: raise ValueError('Error! bashparse.resolve_aliasing(alias_table != dict)')
+
+
     def cmd_alias_qual_fn(node, alias_table):
         # If its a command using the file, replace it
         if node.kind == 'command' and len(node.parts) and hasattr(node.parts[0], 'word') and node.parts[0].word in alias_table:
@@ -80,7 +89,10 @@ def resolve_aliasing(node, alias_table = {}):
                     setattr(node_to_unalias, 'word', alias_table[node_to_unalias.word])
         return [ node ]
     
-    return NodeVisitor(node).replace(cmd_alias_qual_fn, {'alias_table':alias_table}, cmd_alias_gen_fn, {'alias_table':alias_table})
+    to_return = []
+    for node in nodes:
+        to_return += NodeVisitor(node).replace(cmd_alias_qual_fn, {'alias_table':alias_table}, cmd_alias_gen_fn, {'alias_table':alias_table})
+    return to_return
 
 
 def build_and_resolve_aliasing(nodes, alias_table={}):
