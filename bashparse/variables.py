@@ -76,7 +76,7 @@ def replace_variables(nodes, var_list, replace_blanks=False):
                         vstr.nodes[nodes_index] = bashparse.ast.expand_ast_along_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
                         vstr.nodes[nodes_index] = bashparse.ast.shift_ast_right_of_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
                     elif type(value) is bashlex.ast.node: 
-                        vstr.nodes[nodes_index] = vstr.swap_node(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), value)
+                        vstr.nodes[nodes_index] = vstr.swap_node(root=vstr.nodes[nodes_index], path=copy.copy(vstr.path[:-1]), child=value)
                     else: 
                         raise ValueError("Error! Variable replacement value wasn't a str or node. bashparse.variables.replace_variables")
 
