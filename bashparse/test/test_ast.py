@@ -179,7 +179,7 @@ class TestAst(TestCase):
 		# children = children[:1] + [ bashlex.ast.node(kind='word', word='injected') ] + children[1:]
 		setattr(root, 'parts', copy.deepcopy(children))		
 
-		NodeVisitor(root).swap_node(root=root, path=[1], new_child = bashlex.ast.node(kind='word', word='injected', pos=(3,12), parts=[]))
+		NodeVisitor(root).swap_node(root=root, path=[1], child = bashlex.ast.node(kind='word', word='injected', pos=(3,12), parts=[]))
 		node_returned = NodeVisitor(root).child(num=1)
 		self.assertTrue(node_returned == bashlex.ast.node(kind='word', word='injected', pos=(0,9), parts=[]))		# Note the alignment of the pos attr
 
