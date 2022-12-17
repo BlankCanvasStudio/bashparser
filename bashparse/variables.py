@@ -3,7 +3,7 @@ from bashparse.ast import NodeVisitor, CONT
 import bashlex, copy, re
 
 
-def replace_variables(node, var_list, replace_blanks=False):
+def replace_variables(nodes, var_list, replace_blanks=False):
     """ Takes a node, var list. Replaces all the instances of variables found in the var_list
         with their corresponding value via regex. var_list IS NOT UPDATED WITH VALUES IN NODE. 
         USE substitute_variables FOR THAT FUNCITONALITY. The identification of a variable is done via the 
@@ -13,7 +13,9 @@ def replace_variables(node, var_list, replace_blanks=False):
         This function also properly shifts the ast to account for any replacements, meaning you shouldn't be able
         to tell if the tree has been replaced or was generated directly from the text. You're welcome, it was hell  """
 
-    if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.replace_variables(node != bashlex.ast.node)')
+    if type(nodes) is not list: nodes = [ nodes ]
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.replace_variables(node != bashlex.ast.node)')
     if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.replace_variables(var_list != dict)')
 
     def gen_new_trees(vstr, name):
@@ -113,19 +115,20 @@ def replace_variables(node, var_list, replace_blanks=False):
 
         return CONT
 
+    to_return = []
+    for node in nodes:
+        vstr = NodeVisitor(node)
+        vstr.apply(apply_fn, vstr, var_list, replace_blanks)
 
-    vstr = NodeVisitor(node)
-    vstr.apply(apply_fn, vstr, var_list, replace_blanks)
-
-    """ Remove all the param nodes that we replaced earlier in the code. 
-        This needs to be done in reverse order so that the locations of the parameter nodes, 
-        which are saved in arrays, do not shift indexes. Otherwise you cannot reliably reference 
-        the same nodes every time. God bless """
-    for param_path in reversed(vstr.params_for_removal):
-        for i, node in enumerate(vstr.nodes):
-            vstr.nodes[i] = vstr.remove(vstr.nodes[i], param_path)
-
-    return vstr.nodes
+        """ Remove all the param nodes that we replaced earlier in the code. 
+            This needs to be done in reverse order so that the locations of the parameter nodes, 
+            which are saved in arrays, do not shift indexes. Otherwise you cannot reliably reference 
+            the same nodes every time. God bless """
+        for param_path in reversed(vstr.params_for_removal):
+            for i, node in enumerate(vstr.nodes):
+                vstr.nodes[i] = vstr.remove(vstr.nodes[i], param_path)
+        to_return += vstr.nodes
+    return to_return
 
 
 def substitute_variables(nodes, var_list = {}, replace_blanks=False):
@@ -145,10 +148,12 @@ def substitute_variables(nodes, var_list = {}, replace_blanks=False):
     return to_return
 
 
-def update_variable_list(node, var_list):
+def update_variable_list(nodes, var_list):
     """(node, variable dict) strips any variables out of ast and saves them to variable list. 
 	returns an updated variable dict"""
-    if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_variable_list(node != bashlex.ast.node)')
+    if type(nodes) is not list: nodes = [ nodes ]
+    for node in nodes:
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_variable_list(node != list of bashlex.ast.node)')
     if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.update_variable_list(var_list != dict)')
 
     def apply_fn(node, var_list):
@@ -159,7 +164,8 @@ def update_variable_list(node, var_list):
         elif node.kind == 'for':
             var_list = update_var_list_with_for_loop(node, var_list)
         return CONT
-    NodeVisitor(node).apply(apply_fn, var_list)
+    for node in nodes:
+        NodeVisitor(node).apply(apply_fn, var_list)
     return var_list
 
 
@@ -184,42 +190,45 @@ def add_variable_to_list(var_list, name, values):
     return var_list
 
 
-def update_var_list_with_for_loop(for_node, var_list, replace_blanks=False):
+def update_var_list_with_for_loop(for_nodes, var_list, replace_blanks=False):
     """ This function takes a for_loop node and a variable list. It updated the value of the var_lits
         with the value that the for loop assigned to the iterator. This value could be a string, another variable, 
         or a command substitution. All cases are covered here. If another variable is specified, the value assigned 
         is a replication of the other variables value at that point in time, not a reference to the other variable """
-    if type(for_node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_var_list_with_for_loop(node != bashlex.ast.node)')
+    if type(for_nodes) is not list: for_nodes = [ for_nodes ]
+    for for_node in for_nodes:
+        if type(for_node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_var_list_with_for_loop(node != bashlex.ast.node)')
     if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.update_var_list_with_for_loop(var_list != dict)')
     
-    """ Verify the forloop has the format for X in Y. If not, then return the var_list unchanged. Could put error here but haven't had an issue yet """
-    if not ( hasattr(for_node, 'parts') and len(for_node.parts) >= 3 and  
-            hasattr(for_node.parts[0], 'word') and for_node.parts[0].word == 'for' and 
-            hasattr(for_node.parts[2], 'word') and for_node.parts[2].word == 'in'  ) : return var_list 
-    
-    """ Gather all the info to be stripped from the for loop """
-    name = for_node.parts[1].word
-    value_index = 3
-    variable_value = []
-    value_nodes = []
+    for for_node in for_nodes:
+        """ Verify the forloop has the format for X in Y. If not, then return the var_list unchanged. Could put error here but haven't had an issue yet """
+        if not ( hasattr(for_node, 'parts') and len(for_node.parts) >= 3 and  
+                hasattr(for_node.parts[0], 'word') and for_node.parts[0].word == 'for' and 
+                hasattr(for_node.parts[2], 'word') and for_node.parts[2].word == 'in'  ) : return var_list 
+        
+        """ Gather all the info to be stripped from the for loop """
+        name = for_node.parts[1].word
+        value_index = 3
+        variable_value = []
+        value_nodes = []
 
-    """ Strip the data from the for loop """
-    while value_index < len(for_node.parts) and for_node.parts[value_index].word != ';' and for_node.parts[value_index].word !='do':
-        """ Values can only be in word nodes so we check for variables, command siubsitutions, and any 
-            nested options. We then convert it to its fully replaced form """
-        if not len(for_node.parts[value_index].parts):
-            variable_value += for_node.parts[value_index].word.split(' ')
-        else:
-            for part in for_node.parts[value_index].parts: 
-                if part.kind == 'parameter':
-                    variable_value += var_list [ part.value ]
-                if part.kind == 'commandsubstitution':
-                    value_nodes = substitute_variables(part, var_list, replace_blanks)
-                    for value_node in value_nodes: 
-                        variable_value += [ str(NodeVisitor(value_node)) ]
-        value_index += 1
+        """ Strip the data from the for loop """
+        while value_index < len(for_node.parts) and for_node.parts[value_index].word != ';' and for_node.parts[value_index].word !='do':
+            """ Values can only be in word nodes so we check for variables, command siubsitutions, and any 
+                nested options. We then convert it to its fully replaced form """
+            if not len(for_node.parts[value_index].parts):
+                variable_value += for_node.parts[value_index].word.split(' ')
+            else:
+                for part in for_node.parts[value_index].parts: 
+                    if part.kind == 'parameter':
+                        variable_value += var_list [ part.value ]
+                    if part.kind == 'commandsubstitution':
+                        value_nodes = substitute_variables(part, var_list, replace_blanks)
+                        for value_node in value_nodes: 
+                            variable_value += [ str(NodeVisitor(value_node)) ]
+            value_index += 1
 
-    """ Update the var_list with the new forloop iterator values """
-    var_list = add_variable_to_list(var_list, name, variable_value)
+        """ Update the var_list with the new forloop iterator values """
+        var_list = add_variable_to_list(var_list, name, variable_value)
     
     return var_list
