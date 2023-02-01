@@ -39,6 +39,8 @@ class TestAst(TestCase):
 		expected_result = "for a in $n do wget that ; cd there ; mv here ; a=b ; done"
 		self.assertTrue(rebuilt_commands == expected_result)
 
+		self.assertTrue(str(NodeVisitor(None)) == '')
+
 
 	def test_apply(self):
 		# Build ast to test apply on

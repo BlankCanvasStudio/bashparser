@@ -26,6 +26,9 @@ class NodeVisitor:
 
     def __str__(self):
         """ Don't let it save itself, always recompute. Much easier than changing every time """
+        if self.root is None:
+            return ''
+
         self._string = ""
         
         def apply_fn(node):
