@@ -160,6 +160,7 @@ def update_variable_list(nodes, var_list):
         """ We need to treat a variable and for loop seperately because a string in a for loop is actually an array """
         if node.kind == 'assignment':
             name, value = node.word.split('=', maxsplit=1)
+            var_list[name] = []
             var_list = add_variable_to_list(var_list, name, value)
         elif node.kind == 'for':
             var_list = update_var_list_with_for_loop(node, var_list)

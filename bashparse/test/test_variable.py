@@ -102,6 +102,15 @@ class TestVariables(TestCase):
         for_node = bashlex.parse('for a in "$(echo this)"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {})
         self.assertTrue(new_var_list == {'a':['$(echo this)']})
+        
+        # test two updates in a row doesn't append the new values
+        var_list = {}
+        node = bashparse.parse('a=3')[0]
+        new_var_list = update_variable_list(node, var_list)
+        self.assertTrue({'a':['3']} == new_var_list)
+        node = bashparse.parse('a=4')[0]
+        new_var_list = update_variable_list(node, new_var_list)
+        self.assertTrue({'a':['4']} == new_var_list)
     
 
     def test_update_var_list_with_for_loop(self):
