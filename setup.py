@@ -6,12 +6,12 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="bashparse",
+    name="bashparser",
     version="0.1",
     author="Spencer Stingley",
     author_email="sstingle@usc.edu",
-    description="A tool for analysing and deobfuscating bash scripts",
-    long_description=long_description,
+    description="A framework for manipulating and analysing bash scripts",
+    long_description="A framework for manipulating and analysing bash scripts",
     long_description_content_type="text/markdown",
     url="https://github.com/BlankCanvasStudio/bashparse",
     packages=setuptools.find_packages(),

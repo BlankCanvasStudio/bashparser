@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: bashparser
+Version: 0.1
+Summary: A framework for manipulating and analysing bash scripts
+Home-page: https://github.com/BlankCanvasStudio/bashparse
+Author: Spencer Stingley
+Author-email: sstingle@usc.edu
+Keywords: bash,parsing,analysis
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+
+A framework for manipulating and analysing bash scripts
