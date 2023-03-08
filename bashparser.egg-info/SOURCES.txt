@@ -15,6 +15,7 @@ bashparser/variables.py
 bashparser.egg-info/PKG-INFO
 bashparser.egg-info/SOURCES.txt
 bashparser.egg-info/dependency_links.txt
+bashparser.egg-info/entry_points.txt
 bashparser.egg-info/requires.txt
 bashparser.egg-info/top_level.txt
 bashparser/test/__init__.py

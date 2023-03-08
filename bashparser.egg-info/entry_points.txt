@@ -1,0 +1,2 @@
+[console_scripts]
+unroll = bashparser.unroll:main

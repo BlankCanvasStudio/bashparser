@@ -45,8 +45,7 @@ def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}):
 
 	return commands
 
-
-if __name__ == "__main__":
+def main():
 	import argparse
 
 	parser = argparse.ArgumentParser()
@@ -69,3 +68,6 @@ if __name__ == "__main__":
 			res = advanced_unroll(nodes)
 			for node in res:
 				print(str(bashparser.NodeVisitor(node)))
+
+if __name__ == "__main__":
+	main()

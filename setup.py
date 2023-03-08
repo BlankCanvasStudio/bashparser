@@ -15,12 +15,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/BlankCanvasStudio/bashparse",
     packages=setuptools.find_packages(),
-    # entry_points={
-    #     'console_scripts': [
-    #         # migrating to pdb prefixes
-    #         'script-name = module.foo.bar:main',
-    #     ]
-    # },
+    entry_points={
+        'console_scripts': [
+            'unroll = bashparser.unroll:main',
+        ]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
