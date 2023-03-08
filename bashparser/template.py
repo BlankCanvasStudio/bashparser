@@ -1,5 +1,9 @@
+#!/bin/python3
 """ This file holds the definition of the template object """
-import bashparse, copy
+import bashparser.unroll as unroll
+import copy 
+from bashparser.chunk import *
+from bashparser.generalize import *
 
 
 class Template:
@@ -34,9 +38,17 @@ class Template:
 
 
 # generate the templaces from chunks
+def generate_templates(nodes):
+    """ This function takes an array of nodes and returns the templates generated """
 
-def run_generate_templates(chunks, nodes):
-    # primative turn every chunk into a template
+    if type(nodes) is not list: nodes = [nodes]
+
+    chunks = find_variable_chunks(nodes)
+    chunks += find_cd_chunks(nodes)
+    nodes = generalize_nodes(nodes) 
+        # Make sure to generalize last. You'll make searching really buggy
+    
+    # Actually count all the templates
     templates = []
     for slce in chunks:
         text = ''
@@ -49,14 +61,34 @@ def run_generate_templates(chunks, nodes):
     return templates
 
 
+def add_templates(templates, template_record):
+    """ This function takes in the templates & current template records and returns the updated 
+    template_record object. It adds all templates to the template_record object. The record object 
+    is going to be used to idetify any important templates / trends. """
+
+    for template in templates:
+        if template.text in template_record: template_record[template.text].inc_counts(inc_num = template.raw_count) 
+        else: template_record[template.text] = template
+
+    return template_record
 
 
-# find the usefule templates
+def templatize(nodes, template_record = {}):
+    """updates the template_record
+    object with all of the templates found in the files. Returns the template_record object (dict) """
 
-def run_find_useful_templates(template_record):
-    # basic filtering alg: don't
-    templates = []
-    for key in template_record.keys():
-        templates += [ template_record[key] ]
-    
-    return templates
+    # We generate 3 kinds of nodes to draw templates from: 
+        # originally parsed nodes, variables replaced nodes, and the unrolled nodes 
+    var_list = bashparser.update_variable_list_with_node(nodes)
+    replaced_nodes = bashparser.substitute_variables(nodes, var_list)
+    unrolled_nodes = unroll.replacement_unroll(nodes, var_list = {})
+
+    # Generate the templates from each sequence of nodes
+    templates = generate_templates(nodes)
+    templates += generate_templates(replaced_nodes)
+    templates += generate_templates(unrolled_nodes)
+
+    # Add the new templates to the records
+    template_record = add_templates(templates, template_record)
+
+    return template_record

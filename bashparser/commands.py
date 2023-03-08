@@ -1,6 +1,7 @@
+#!/bin/python3
 import bashlex, copy
-from bashparse.ast import NodeVisitor
-from bashparse.ast import CONT, DONT_DESCEND
+from bashparser.ast import NodeVisitor
+from bashparser.ast import CONT, DONT_DESCEND
 
 
 cmd_creates_aliasing = { 'mv', 'cp' }
@@ -14,8 +15,8 @@ def build_alias_table(nodes, alias_table = {}):
 
     if type(nodes) is not list: nodes = [ nodes ]
     for node in nodes:
-        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.build_alias_table(node != bashlex.ast.node)')
-    if type(alias_table) is not dict: raise ValueError('Error! bashparse.build_alias_table(alias_table != dict)')
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.build_alias_table(node != bashlex.ast.node)')
+    if type(alias_table) is not dict: raise ValueError('Error! bashparser.build_alias_table(alias_table != dict)')
 
     def apply_fn(node, alias_table):
         if node.kind != 'command': return CONT
@@ -55,8 +56,8 @@ def resolve_aliasing(nodes, alias_table = {}):
     
     if type(nodes) is not list: nodes = [ nodes ]
     for node in nodes:
-        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.resolve_aliasing(node != bashlex.ast.node)')
-    if type(alias_table) is not dict: raise ValueError('Error! bashparse.resolve_aliasing(alias_table != dict)')
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.resolve_aliasing(node != bashlex.ast.node)')
+    if type(alias_table) is not dict: raise ValueError('Error! bashparser.resolve_aliasing(alias_table != dict)')
 
 
     def cmd_alias_qual_fn(node, alias_table):

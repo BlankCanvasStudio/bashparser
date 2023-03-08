@@ -1,5 +1,6 @@
-import bashparse, copy, bashlex
-from bashparse.ast import NodeVisitor, CONT, DONT_DESCEND
+#!/bin/python3
+import bashparser, copy, bashlex
+from bashparser.ast import NodeVisitor, CONT, DONT_DESCEND
 
 class Chunk:
     def __init__(self, variable_name, start, end):
@@ -18,34 +19,34 @@ class Chunk:
         return "Chunk(" + self.name + ', ' + start + ', ' + end + ')'
     
 
-class chunk_connection:
+class ChunkConnection:
     def __init__(self, chunk, connected_to):
         self.chunk = chunk
         self.connected_to = connected_to
     def __repr__(self):
-        return "chunk_connection(chunk: " + str(self.chunk) +' connected to: ' + str(self.connected_to) + ')'
+        return "ChunkConnection(chunk: " + str(self.chunk) +' connected to: ' + str(self.connected_to) + ')'
     def __str__(self):
-        return "chunk_connection(chunk: " + str(self.chunk) +' connected to: ' + str(self.connected_to) + ')'
+        return "ChunkConnection(chunk: " + str(self.chunk) +' connected to: ' + str(self.connected_to) + ')'
 
 
 def find_variable_chunks(nodes):
     if type(nodes) is not list: nodes = [nodes]
 
     def apply_fn(node, vstr, chunk_index, node_num):
-        full_path = [ node_num ] + vstr.path
+        # full_path = [ node_num ] + vstr.path
         if node.kind == 'assignment':
             name = node.word.split('=', maxsplit=1)[0]
             if name not in chunk_index:
-                new_chunk = Chunk(name, start=full_path, end=None)
+                new_chunk = Chunk(name, start=vstr.path, end=None)
                 chunk_index[name] = [new_chunk]     # We use an array here cause there could be multiple chunks per variable
             else:
-                chunk_index[name][-1].end = full_path
-                new_chunk = Chunk(name, start=full_path, end=None)
+                chunk_index[name][-1].end = vstr.path
+                new_chunk = Chunk(name, start=vstr.path, end=None)
                 chunk_index[name] += new_chunk
         if node.kind == 'parameter':
             name = node.value
             if name in chunk_index:   # check to see if variable has been declared
-                chunk_index[name][-1].end = full_path[:-1]   # This is going to update every time. Also path should be to word node not param node (imo)
+                chunk_index[name][-1].end = vstr.path[:-1]   # This is going to update every time. Also path should be to word node not param node (imo)
                 # A condition could be added here to iterate up the path until we hit a command node or an equivalent. But not useful quite yet
         return CONT
 
@@ -62,7 +63,7 @@ def find_cd_chunks(nodes):
     if type(nodes) is not list: nodes = [nodes]
     chunks = []
     # Retieve all the cd commands
-    commands = bashparse.return_paths_to_node_type(nodes, 'command')
+    commands = bashparser.return_paths_to_node_type(nodes, 'command')
     cds = []
     for command in commands: 
         if hasattr(command.node.parts[0], 'word') and command.node.parts[0].word == 'cd': cds += [ command ]
@@ -111,12 +112,12 @@ def return_connected_chunks(chunks):
             for j_name in variable_names[i+1:]:
                 for j_chunk in chunks[j_name]:
                     if is_connected(chunk, j_chunk):
-                        connected_chunks += [chunk_connection(chunk, j_chunk)]
+                        connected_chunks += [ChunkConnection(chunk, j_chunk)]
     return connected_chunks
 
 
 def var_is_used_in_declaration(assignment_node, var_name):
-    variables = bashparse.return_nodes_of_type(assignment_node, 'parameter')
+    variables = bashparser.return_nodes_of_type(assignment_node, 'parameter')
     for var in variables: 
         if var.value == var_name: return True
     return False
@@ -127,7 +128,7 @@ def return_dependent_chunks(connected_chunks, orig_nodes):
     dependent_chunks = []
     for chunk in connected_chunks:
         # Used in variable definition
-        assignments = bashparse.return_paths_to_node_type(orig_nodes, 'assignment')
+        assignments = bashparser.return_paths_to_node_type(orig_nodes, 'assignment')
         for assignment in assignments:
             if assignment.path > chunk.chunk.start: # This might break with the introduction of cd as first entry
                 is_dependent = False
@@ -136,7 +137,7 @@ def return_dependent_chunks(connected_chunks, orig_nodes):
                 if is_dependent:
                     dependent_chunks += [ chunk ]
                     break
-    
+
     return dependent_chunks
 
 
@@ -151,31 +152,13 @@ def easy_nuclear_slicing(nodes):
 
     return chunks
 
-
-"""
-def identify_variable_chunks(nodes):
-    # This is just going to grab chunk indexes based on the variable locations
-    chunks = []
-    assignment_chunks = bashtemplate.chunk.find_variable_chunks(nodes)
-    for key in assignment_chunks.keys():
-        # Strip out just the chunks. Don't care about the variables involved
-        chunks += assignment_chunks[key]
-    # connected_chunks = return_connected_chunks(assignment_chunks)
-    # dependent_chunks = return_dependent_chunks(connected_chunks, nodes)
-    # chunks += assignment_chunks
-    cd_chunks = bashtemplate.chunk.find_cd_chunks(nodes)
-    chunks += cd_chunks
-    
-    return chunks
-"""
-
 # filename="testing.sh"
 
-# nodes = bashparse.parse(open(filename).read())
+# nodes = bashparser.parse(open(filename).read())
 
-# variable_assignments = bashparse.return_nodes_of_type(nodes, 'assignment')
+# variable_assignments = bashparser.return_nodes_of_type(nodes, 'assignment')
 
-# variable_uses = bashparse.return_variable_paths(nodes)
+# variable_uses = bashparser.return_variable_paths(nodes)
 
 # variable_commands = return_variable_commands(nodes)
 

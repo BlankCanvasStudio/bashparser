@@ -1,5 +1,6 @@
-import bashparse.ast
-from bashparse.ast import NodeVisitor, CONT
+#!/bin/python3
+import bashparser.ast
+from bashparser.ast import NodeVisitor, CONT
 import bashlex, copy, re
 
 
@@ -15,8 +16,8 @@ def replace_variables(nodes, var_list, replace_blanks=False):
 
     if type(nodes) is not list: nodes = [ nodes ]
     for node in nodes:
-        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.replace_variables(node != bashlex.ast.node)')
-    if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.replace_variables(var_list != dict)')
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.variables.replace_variables(node != bashlex.ast.node)')
+    if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.replace_variables(var_list != dict)')
 
     def gen_new_trees(vstr, name):
         """ If the variable has multiple values and the variable has not been encountered yet, 
@@ -73,12 +74,12 @@ def replace_variables(nodes, var_list, replace_blanks=False):
                         jth_node = vstr.at_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]))
                         jth_node.word = re.sub(pattern, value, jth_node.word)
                         delta = len(value) - (len('$') + len(name))                  # Change in text len due to value sub. ie delta = new_len - old_len
-                        vstr.nodes[nodes_index] = bashparse.ast.expand_ast_along_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
-                        vstr.nodes[nodes_index] = bashparse.ast.shift_ast_right_of_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
+                        vstr.nodes[nodes_index] = bashparser.ast.expand_ast_along_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
+                        vstr.nodes[nodes_index] = bashparser.ast.shift_ast_right_of_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
                     elif type(value) is bashlex.ast.node: 
                         vstr.nodes[nodes_index] = vstr.swap_node(root=vstr.nodes[nodes_index], path=copy.copy(vstr.path[:-1]), child=value)
                     else: 
-                        raise ValueError("Error! Variable replacement value wasn't a str or node. bashparse.variables.replace_variables")
+                        raise ValueError("Error! Variable replacement value wasn't a str or node. bashparser.variables.replace_variables")
 
 
     def apply_fn(node, vstr, var_list, replace_blanks=False):
@@ -138,8 +139,8 @@ def substitute_variables(nodes, var_list = {}, replace_blanks=False):
     
     if type(nodes) is not list: nodes = [nodes]
     for node in nodes:
-        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.substitute_variables(nodes != list of bashlex.ast.nodes)')
-    if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.substitute_variables(var_list != dict)')
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.variables.substitute_variables(nodes != list of bashlex.ast.nodes)')
+    if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.substitute_variables(var_list != dict)')
     to_return = []
 
     for node in nodes:
@@ -153,8 +154,8 @@ def update_variable_list(nodes, var_list):
 	returns an updated variable dict"""
     if type(nodes) is not list: nodes = [ nodes ]
     for node in nodes:
-        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_variable_list(node != list of bashlex.ast.node)')
-    if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.update_variable_list(var_list != dict)')
+        if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.variables.update_variable_list(node != list of bashlex.ast.node)')
+    if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.update_variable_list(var_list != dict)')
 
     def apply_fn(node, var_list):
         """ We need to treat a variable and for loop seperately because a string in a for loop is actually an array """
@@ -174,8 +175,8 @@ def add_variable_to_list(var_list, name, values):
     """ (variable dict, name, value) Adds the corresponding name and value to dictionary. If name exists in 
         the dictionary, the value is added. Prevents bugs with use of the var_list """
 
-    if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.add_variable_to_list(var_list != dict)')
-    if type(name) is not str: raise ValueError('Error! bashparse.variables.add_variable_to_list(name != str)')
+    if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.add_variable_to_list(var_list != dict)')
+    if type(name) is not str: raise ValueError('Error! bashparser.variables.add_variable_to_list(name != str)')
     if type(values) is not list: values = [ values ]
     
     """ We are only going to save things as arrays. This makes the unwrapping/replacing in the node structure easier """
@@ -198,8 +199,8 @@ def update_var_list_with_for_loop(for_nodes, var_list, replace_blanks=False):
         is a replication of the other variables value at that point in time, not a reference to the other variable """
     if type(for_nodes) is not list: for_nodes = [ for_nodes ]
     for for_node in for_nodes:
-        if type(for_node) is not bashlex.ast.node: raise ValueError('Error! bashparse.variables.update_var_list_with_for_loop(node != bashlex.ast.node)')
-    if type(var_list) is not dict: raise ValueError('Error! bashparse.variables.update_var_list_with_for_loop(var_list != dict)')
+        if type(for_node) is not bashlex.ast.node: raise ValueError('Error! bashparser.variables.update_var_list_with_for_loop(node != bashlex.ast.node)')
+    if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.update_var_list_with_for_loop(var_list != dict)')
     
     for for_node in for_nodes:
         """ Verify the forloop has the format for X in Y. If not, then return the var_list unchanged. Could put error here but haven't had an issue yet """

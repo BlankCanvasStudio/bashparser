@@ -1,10 +1,5 @@
-import re, bashparse
-
-def run_generalize_nodes(generalize_nodes):
-    # return basic_generalization(generalize_nodes)
-    return parameter_tracking_generalization(generalize_nodes)
-    #return variable_tracking_generalization(generalize_nodes)
-
+#!/bin/python3
+import re, bashparser
 
 def basic_generalization(generalize_nodes):
     # Basic replacement.
@@ -23,7 +18,7 @@ def basic_generalization(generalize_nodes):
             else:
                 for part in node.parts:
                     basic_generalization(part)
-                
+
         if hasattr(node, 'list'):
             for part in node.list:
                 basic_generalization(part)
@@ -36,17 +31,18 @@ def basic_generalization(generalize_nodes):
     return generalize_nodes
 
 
-def parameter_tracking_generalization(generalize_nodes):
+def parameter_tracking_generalization(generalize_nodes, params_used = {}, param_num = 0):
     """ This replacement scheme tracks the parameters used to show any consistency 
     amoung the arguments. Start the parameter count at 0 and go up from there 
     referencing a dictionary to maintain internal consistency
     The number shouldn't matter but the pattern of the numbers will """
     if type(generalize_nodes) is not list: generalize_nodes = [ generalize_nodes ]
-    params_used = {}
-    param_num = 0
+
     for node in generalize_nodes:
         if node.kind == 'word':
+            print('here1')
             if node.word not in params_used: 
+                print('here2')
                 params_used[node.word] = str(param_num) 
                 param_num += 1
             node.word = '%' + params_used[node.word]
@@ -62,80 +58,56 @@ def parameter_tracking_generalization(generalize_nodes):
                     node.parts[0].word = "%d=%" + str(params_used[value_assigned])
                 for i in range(1, len(node.parts)):
                     if hasattr(node.parts[i], 'word'):
+                        print('here3')
                         if node.parts[i].word not in params_used: 
+                            print('here4')
                             params_used[node.parts[i].word] = str(param_num) 
                             param_num += 1
                         node.parts[i].word = '%' + str(params_used[node.parts[i].word])
             else:
                 for part in node.parts:
-                    parameter_tracking_generalization(part)
+                    param_num = parameter_tracking_generalization(part, params_used, param_num)
                 
         if hasattr(node, 'list'):
             for part in node.list:
-                parameter_tracking_generalization(part)
+                param_num = parameter_tracking_generalization(part, params_used, param_num)
         if hasattr(node,'command'):
-            parameter_tracking_generalization(node.command)
+            param_num = parameter_tracking_generalization(node.command, params_used, param_num)
         if hasattr(node, 'output'):
-            parameter_tracking_generalization(node.output)
+            param_num = parameter_tracking_generalization(node.output, params_used, param_num)
 
             for i in range(1, len(node.parts)): 
                 if node.parts[i].word not in params_used: 
                     params_used[node.parts[i].word] = str(param_num) 
                     param_num += 1
                 node.parts[i].word = '%' + params_used[node.parts[i].word]
-    return generalize_nodes
+    return param_num
 
 
 def variable_tracking_generalization(generalize_nodes, params_used = {}, param_num = 0):
-    """ This funciton tracks the variable usage through the 
-    """
     if type(generalize_nodes) is not list: generalize_nodes = [ generalize_nodes ]
+    def apply_fn(node, vstr, params_used):
+        if node.kind == 'assignment':
+            var_name = node.word.split('=')[0]
+            params_used[var_name] = vstr.param_num
+            vstr.param_num += 1
+        if node.kind == 'parameter':
+            # This means we need to do the replacing in the parent 
+            parent = vstr.parent
+            init_len = len(parent.word)
+            parent.word = parent.word[:node.pos[0] - parent.pos[0]] + '$' + str(params_used[node.value]) + parent.word[node.pos[1] - parent.pos[0]:]
+            delta = len(parent.word) - init_len
+            bashparser.ast.shift_ast_right_of_path(vstr.root, vstr.path, delta)
+        return bashparser.CONT
+    
+    params_used = {}
+    param_num = 0
     for node in generalize_nodes:
-        if node.kind == 'word':
-            if node.word not in params_used: 
-                params_used[node.word] = str(param_num) 
-                param_num += 1
-            node.word = '%' + params_used[node.word]
-        if hasattr(node, 'parts'):
-            if node.kind == 'command':
-                if node.parts[0].kind == 'assignment':
-                    # Theres no reason we can't use the param number here
-                    # Should the variable assignments always be different? I think yes
-                    # What about the values that are assigned?
-                    variable_name, value_assigned = node.parts[0].word.split('=', 1)
-                    # We should also assume its unrolled
-                    if value_assigned not in params_used:
-                        params_used[value_assigned] = str(param_num) 
-                        param_num += 1
-                    
-                    params_used['$'+variable_name] = str(param_num) 
-                    param_num += 1
-                    
-                    node.parts[0].word = "%" + params_used['$'+variable_name] +"=%" + params_used[value_assigned]
-                for i in range(1, len(node.parts)):
-                    node.parts = variable_tracking_generalization(node.parts[1:], params_used, param_num)
+        vstr = bashparser.NodeVisitor(node)
+        vstr.param_num = param_num
+        vstr.apply(apply_fn, vstr, params_used)
+        param_num = vstr.param_num
 
-            else:
-                for part in node.parts:
-                    if part.kind != 'parameter':
-                        parameter_tracking_generalization(part)
-                    elif '$'+part.value in params_used:
-                        node.word = node.word.replace(part.value, '%'+params_used['$'+part.value])
-                        node.parts.remove(part)
-
-        if hasattr(node, 'list'):
-            for part in node.list:
-                parameter_tracking_generalization(part)
-        if hasattr(node,'command'):
-            parameter_tracking_generalization(node.command)
-        if hasattr(node, 'output'):
-            parameter_tracking_generalization(node.output)
-
-            for i in range(1, len(node.parts)): 
-                if node.parts[i].word not in params_used: 
-                    params_used[node.parts[i].word] = str(param_num) 
-                    param_num += 1
-                node.parts[i].word = '%' + params_used[node.parts[i].word]
     return generalize_nodes
 
 
@@ -157,29 +129,3 @@ def interpret_string(word):
     elif is_path(word): str_type = 'p'  # path
 
     return '%s-' + str_type
-
-def context_based_generalization(generalize_ndoes):
-    if type(generalize_nodes) is not list: generalize_nodes = [ generalize_nodes ]
-    for node in generalize_nodes:
-        if node.kind == 'word':
-            node.word = interpret_string(node.word)
-        if hasattr(node, 'parts'):
-            if node.kind == 'command':
-                if node.parts[0].kind == 'assignment':
-                    value_assigned = node.parts[0].word.split('=', 1)[1]
-                    node.parts[0].word = "%d=%" + interpret_string(value_assigned)
-                for i in range(1, len(node.parts)):
-                    node.parts[i].word = '%' + interpret_string(node.parts[i].word)
-            else:
-                for part in node.parts:
-                    parameter_tracking_generalization(part)
-                
-        if hasattr(node, 'list'):
-            for part in node.list:
-                parameter_tracking_generalization(part)
-        if hasattr(node,'command'):
-            parameter_tracking_generalization(node.command)
-        if hasattr(node, 'output'):
-            parameter_tracking_generalization(node.output)
-
-    return generalize_nodes

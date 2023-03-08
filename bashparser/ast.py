@@ -1,4 +1,5 @@
-import bashlex, copy, bashparse
+#!/bin/python3
+import bashlex, copy, bashparser
 from ordered_set import OrderedSet
 
 
@@ -59,7 +60,7 @@ class NodeVisitor:
 
 
     def __type__(self):
-        return 'bashparse.ast.NodeVisitor'      # Praying this is the proper implementation
+        return 'bashparser.ast.NodeVisitor'      # Praying this is the proper implementation
 
 
     """ Used for any indexing purposes when divergent asts are involved and modified when no divergence ops are specified"""
@@ -308,8 +309,8 @@ class NodeVisitor:
         self.justify(child)
         self.align(child, old_child.pos[0])
         delta = child.pos[1] - old_child.pos[1]
-        bashparse.ast.expand_ast_along_path(root, path[:-1], delta)
-        bashparse.ast.shift_ast_right_of_path(root, path, delta)
+        bashparser.ast.expand_ast_along_path(root, path[:-1], delta)
+        bashparser.ast.shift_ast_right_of_path(root, path, delta)
 
         k = parent.kind
         num_child_nodes = 0
@@ -321,7 +322,7 @@ class NodeVisitor:
             if len(parent.parts) >= path[-1]: 
                 parent.parts[path[-1]] = child
         elif k in self.no_children:
-            raise ValueError('Error! You are trying to replace the child of a node which, by definition, has no children. Function: bashparse.ast.NodeVisitor.replace')
+            raise ValueError('Error! You are trying to replace the child of a node which, by definition, has no children. Function: bashparser.ast.NodeVisitor.replace')
         elif k in self.command_children:
             num_child_nodes = len(parent.command) 
             if num_child_nodes >= path[-1]:
@@ -348,7 +349,7 @@ class NodeVisitor:
         
         """ Error checking for sanity sake """
         if self.child(parent, path[-1]) != child:
-            raise ValueError('Error! bashparse.ast.NodeVisitor.replace did not change the node properly')
+            raise ValueError('Error! bashparser.ast.NodeVisitor.replace did not change the node properly')
 
         return root
 
@@ -430,8 +431,8 @@ class NodeVisitor:
 def expand_ast_along_path(root, path_to_update, delta):
     """ This function expands the pos attribute to the right along a path by amount delta. Useful for variable replacement & updating.
         Updates the value BY REFERENCE """
-    if type(root) is not bashlex.ast.node: raise ValueError('Error! bashparse.ast.expand_ast_along_path(node != bashparse.node)')
-    if type(path_to_update) is not list: raise ValueError('Error! bashparse.ast.expand_ast_along_path(path != list)')
+    if type(root) is not bashlex.ast.node: raise ValueError('Error! bashparser.ast.expand_ast_along_path(node != bashparser.node)')
+    if type(path_to_update) is not list: raise ValueError('Error! bashparser.ast.expand_ast_along_path(path != list)')
     if type(delta) is not int: raise ValueError('delta must be an int')
     def apply_fn(node, delta): node.pos = (node.pos[0], node.pos[1] + delta)
     return NodeVisitor(root).apply_along_path(apply_fn, path_to_update, delta).root
@@ -440,7 +441,7 @@ def expand_ast_along_path(root, path_to_update, delta):
 def shift_ast_right_of_path(root, path_to_update, delta):
     """ Takes a root and adds the delta to both pos attributes if its to the right of the path. Excludes the path.
         Functions BY REFERENCE not value but returns the root for posterity sake """
-    if type(root) is not bashlex.ast.node: raise ValueError('root must be a bashparse.node')
+    if type(root) is not bashlex.ast.node: raise ValueError('root must be a bashparser.node')
     if type(path_to_update) is not list: raise ValueError('path_to_update must be a list')
     if type(delta) is not int: raise ValueError('delta must be an int')
 

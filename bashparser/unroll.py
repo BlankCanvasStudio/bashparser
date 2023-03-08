@@ -1,26 +1,27 @@
-import bashparse, bashlex
-from bashparse.ast import NodeVisitor
+#!/bin/python3
+import bashparser, bashlex
+from bashparser.ast import NodeVisitor
 
 
 def strip_cmd(nodes):
 	if type(nodes) is not list: nodes = [nodes]
 	for node in nodes: 
-		if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparse.unroll.basic_unroll(nodes != list of bashlex.ast.nodes)')
+		if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.unroll.basic_unroll(nodes != list of bashlex.ast.nodes)')
 	
 	def apply_fn(node, vstr):
 		if node.kind == 'command': 
 			vstr.nodes += [node]
-			return bashparse.DONT_DESCEND
+			return bashparser.DONT_DESCEND
 		if node.kind == 'pipeline':
 			vstr.nodes += [node]
-			return bashparse.DONT_DESCEND
+			return bashparser.DONT_DESCEND
 		if node.kind == 'if':
 			vstr.nodes += [node]
-			return bashparse.DONT_DESCEND
+			return bashparser.DONT_DESCEND
 		if node.kind == 'function':
 			vstr.nodes += [node]
-			return bashparse.DONT_DESCEND
-		return bashparse.CONT
+			return bashparser.DONT_DESCEND
+		return bashparser.CONT
 
 	unrolled_commands = []
 	for node in nodes:
@@ -34,12 +35,37 @@ def strip_cmd(nodes):
 def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}):
 	# The ordering of this function is important. Tread lightly
 
-	nodes = bashparse.build_and_resolve_aliasing(nodes, alias_table)
+	nodes = bashparser.build_and_resolve_aliasing(nodes, alias_table)
 
-	nodes = bashparse.build_and_resolve_fns(nodes, fn_dict)
+	nodes = bashparser.build_and_resolve_fns(nodes, fn_dict)
 
-	nodes = bashparse.substitute_variables(nodes, var_list)
+	nodes = bashparser.substitute_variables(nodes, var_list)
 
 	commands = strip_cmd(nodes)
 
 	return commands
+
+
+if __name__ == "__main__":
+	import argparse
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--cmds", help='Strip the commands from the bash file', action='store_true')
+	parser.add_argument("--file", help="The filename of the bash script you'd like to unroll", type=str)
+	args = parser.parse_args()
+
+
+	if args.file is None:
+		print("Please specify a filename with --file")
+	
+	else:
+		if args.cmds:
+			nodes = bashparser.parse(open(args.file).read())
+			res = strip_cmd(nodes)
+			for node in res:
+				print(str(bashparser.NodeVisitor(node)))
+		else:
+			nodes = bashparser.parse(open(args.file).read())
+			res = advanced_unroll(nodes)
+			for node in res:
+				print(str(bashparser.NodeVisitor(node)))

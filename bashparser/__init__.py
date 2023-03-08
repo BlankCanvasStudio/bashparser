@@ -1,4 +1,4 @@
-from bashparser import variables, commands, ast, functions, template, main, chunk, unroll
+from bashparser import variables, commands, ast, functions, template, chunk, unroll, generalize, complexity
 import bashlex
 
 parse = bashlex.parse
@@ -9,6 +9,7 @@ NodeVisitor = ast.NodeVisitor
 DONT_DESCEND = ast.DONT_DESCEND
 CONT = ast.CONT
 HALT = ast.HALT
+
 
 
 
@@ -30,11 +31,13 @@ justify = ast.NodeVisitor(None).justify
 
 
 
+
 build_alias_table = commands.build_alias_table
 
 resolve_aliasing = commands.resolve_aliasing
 
 build_and_resolve_aliasing = commands.build_and_resolve_aliasing
+
 
 
 
@@ -48,11 +51,14 @@ replace_variables = variables.replace_variables
 
 
 
+
 build_and_resolve_fns = functions.build_and_resolve_fns
 
 build_fn_table = functions.build_fn_table
 
 resolve_functions = functions.resolve_functions
+
+
 
 
 strip_cmd = unroll.strip_cmd
@@ -61,29 +67,54 @@ advanced_unroll = unroll.advanced_unroll
 
 
 
+
 Chunk = chunk.Chunk
+
+ChunkConnection = chunk.ChunkConnection
 
 find_variable_chunks = chunk.find_variable_chunks
 
 find_cd_chunks = chunk.find_cd_chunks
 
+return_connected_chunks = chunk.return_connected_chunks
 
-# Bashtemplate 
+return_dependent_chunks = chunk.return_dependent_chunks
+
+
+
+
+basic_generalization = generalize.basic_generalization
+
+parameter_tracking_generalization = generalize.parameter_tracking_generalization
+
+variable_tracking_generalization = generalize.variable_tracking_generalization
+
+
+
+
+node_complexity = complexity.node_complexity
+
+file_complexity = complexity.file_complexity
+
+weighted_file_complexity = complexity.weighted_file_complexity
+
+hashing_complexity = complexity.hashing_complexity
+
+file_hashing_complexity = complexity.file_hashing_complexity
+
+weighted_file_hashing_complexity = complexity.weighted_file_hashing_complexity
+
+
 
 
 Template = template.Template
-# The object class
 
-generate_templates = main.generate_templates
-    # Takes an array of nodes
+generate_templates = template.generate_templates
 
-generate_useful_templates = main.find_useful_templates
+add_templates = template.add_templates
 
-templatize = \
-    main.templatize
+templatize = template.templatize
 
-filter_templates = \
-    main.filter_templates
 
 
 
