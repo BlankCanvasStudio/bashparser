@@ -6,11 +6,9 @@ bashparser/__init__.py
 bashparser/ast.py
 bashparser/chunk.py
 bashparser/commands.py
+bashparser/complexity.py
 bashparser/functions.py
 bashparser/generalize.py
-bashparser/main.py
-bashparser/metric.py
-bashparser/plotting.py
 bashparser/template.py
 bashparser/unroll.py
 bashparser/variables.py
