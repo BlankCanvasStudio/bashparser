@@ -3,8 +3,8 @@ import bashparser, copy, bashlex
 from bashparser.ast import NodeVisitor, CONT, DONT_DESCEND
 
 class Chunk:
-    def __init__(self, variable_name, start, end):
-        self.name = variable_name 
+    def __init__(self, name, start, end):
+        self.name = name 
         self.start = start
         self.end = end
     def __repr__(self):
@@ -94,9 +94,9 @@ def find_cd_chunks(nodes):
     return chunks
         
         
-def is_connected(is_chunk, connected_chunk):
-    if connected_chunk.start[0] < is_chunk.start[0] and connected_chunk.end[0]: return True 
-    if connected_chunk.start[0] < is_chunk.end[0] and connected_chunk.end[0]: return True
+def is_connected(chunk_one, chunk_two):
+    if chunk_two.start[0] < chunk_one.start[0] and chunk_two.end[0]: return True 
+    if chunk_two.start[0] < chunk_one.end[0] and chunk_two.end[0]: return True
     return False
 
 
