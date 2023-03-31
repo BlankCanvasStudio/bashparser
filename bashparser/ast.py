@@ -44,7 +44,6 @@ class NodeVisitor:
                 for part in cmd.parts:
                     word += str(NodeVisitor(part)) + ' '
                 word = word[:-1] + ')'
-                self._string = self._string + word + ' '
                 
                 return DONT_DESCEND
 
