@@ -1,5 +1,5 @@
 from unittest import TestCase
-import bashparse
+import bashparser
 
 class TestChunk(TestCase):
     def test_variable_chunking(self):
@@ -9,7 +9,7 @@ echo here
 echo $tmp
 cd there;
 """
-        nodes = bashparse.parse(string_to_chunk)
-        chunk = bashparse.find_variable_chunks(nodes)[0]
+        nodes = bashparser.parse(string_to_chunk)
+        chunk = bashparser.find_variable_chunks(nodes)[0]
         self.assertTrue(chunk.start == [0,0])
         self.assertTrue(chunk.end == [2,1])

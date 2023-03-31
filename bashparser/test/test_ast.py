@@ -1,6 +1,6 @@
 from unittest import TestCase
-from bashparse import NodeVisitor
-import bashlex, bashparse.ast, copy
+from bashparser import NodeVisitor
+import bashlex, bashparser.ast, copy
 
 class TestAst(TestCase):
 
@@ -55,13 +55,13 @@ class TestAst(TestCase):
 		def apply_fn(node, vstr):
 			if vstr.path == [1]: 
 				node.word = 'DONT_DESCEND'
-				return bashparse.ast.DONT_DESCEND
+				return bashparser.ast.DONT_DESCEND
 			elif vstr.path == [2,0]:
 				node.word = 'HALT'
-				return bashparse.ast.HALT
+				return bashparser.ast.HALT
 			else:
 				node.word = 'TOUCHED'
-				return bashparse.ast.CONT
+				return bashparser.ast.CONT
 		vstr.apply(apply_fn, vstr)
 
 		# build correct solution by hand so bugs don't interfere with eachother
@@ -92,7 +92,7 @@ class TestAst(TestCase):
 		for i, child in enumerate(root.parts): setattr(child, 'parts', copy.deepcopy(children[:i]))
 		vstr = NodeVisitor(root)
 		# Expand the ast
-		bashparse.ast.expand_ast_along_path(root, [5,3], 2)
+		bashparser.ast.expand_ast_along_path(root, [5,3], 2)
 		# Verify the expansion
 		def apply_fn(node, vstr):
 			path_expanded_on = [5,3]

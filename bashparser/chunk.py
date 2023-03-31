@@ -37,16 +37,16 @@ def find_variable_chunks(nodes):
         if node.kind == 'assignment':
             name = node.word.split('=', maxsplit=1)[0]
             if name not in chunk_index:
-                new_chunk = Chunk(name, start=vstr.path, end=None)
+                new_chunk = Chunk(name, start=[node_num] + vstr.path, end=None)
                 chunk_index[name] = [new_chunk]     # We use an array here cause there could be multiple chunks per variable
             else:
                 chunk_index[name][-1].end = vstr.path
-                new_chunk = Chunk(name, start=vstr.path, end=None)
+                new_chunk = Chunk(name, start=[node_num] + vstr.path, end=None)
                 chunk_index[name] += new_chunk
         if node.kind == 'parameter':
             name = node.value
             if name in chunk_index:   # check to see if variable has been declared
-                chunk_index[name][-1].end = vstr.path[:-1]   # This is going to update every time. Also path should be to word node not param node (imo)
+                chunk_index[name][-1].end = [node_num] + vstr.path[:-1]   # This is going to update every time. Also path should be to word node not param node (imo)
                 # A condition could be added here to iterate up the path until we hit a command node or an equivalent. But not useful quite yet
         return CONT
 

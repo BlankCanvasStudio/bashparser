@@ -44,10 +44,13 @@ class NodeVisitor:
                 for part in cmd.parts:
                     word += str(NodeVisitor(part)) + ' '
                 word = word[:-1] + ')'
-                
+                self._string = self._string + word + ' '
                 return DONT_DESCEND
 
-            elif hasattr(node, 'word'): word = node.word 
+            elif hasattr(node, 'word'): 
+                word = node.word
+                self._string = self._string + word + ' '
+                return DONT_DESCEND 
             else: 
                 print('node: ', node.dump())
                 raise ValueError('Error! Unsupported node kind encountered when converting NodeVisitor to string: ', node.kind)

@@ -1,5 +1,5 @@
 from unittest import TestCase
-import bashparse 
+import bashparser 
 
 class TestUnroll(TestCase):
     def test_basic_cmd_stripping(self):
@@ -8,13 +8,13 @@ echo this; echo that;
 cd there;
 dir | grep this;
 """
-        nodes = bashparse.parse(orig_string)
-        commands_stripped = bashparse.unroll.strip_cmd(nodes)
-        commands_stripped = [ bashparse.justify(x) for x in commands_stripped ]
+        nodes = bashparser.parse(orig_string)
+        commands_stripped = bashparser.unroll.strip_cmd(nodes)
+        commands_stripped = [ bashparser.justify(x) for x in commands_stripped ]
         
-        correct_results = bashparse.parse('echo this') \
-                        + bashparse.parse('echo that') \
-                        + bashparse.parse('cd there') \
-                        + bashparse.parse('dir | grep this')
+        correct_results = bashparser.parse('echo this') \
+                        + bashparser.parse('echo that') \
+                        + bashparser.parse('cd there') \
+                        + bashparser.parse('dir | grep this')
 
         self.assertTrue(correct_results == commands_stripped)

@@ -1,6 +1,6 @@
 from unittest import TestCase
-from bashparse.commands import *
-import bashlex, bashparse
+from bashparser.commands import *
+import bashlex, bashparser
 
 class TestVariables(TestCase):
 
