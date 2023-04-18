@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bashparser",
-    version="0.9",
+    version="0.10",
     author="Spencer Stingley",
     author_email="sstingle@usc.edu",
     description="A framework for manipulating and analysing bash scripts",

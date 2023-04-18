@@ -20,7 +20,7 @@ class NodeVisitor:
         self.no_children = {'operator', 'reservedword', 'pipe', 'parameter', 'tilde', 'heredoc'}
         self.parts_children = {'list', 'pipeline', 'if', 'for', 'while', 'until', 'command', 'function', 'word', 'assignment'}
         self.command_children = {'commandsubstitution', 'processsubstitution'}
-        self.passable_nodes = {'command', 'list', 'compound', 'for', 'parameter', 'function', 'pipeline', 'if'}
+        self.passable_nodes = {'command', 'list', 'compound', 'for', 'parameter', 'function', 'pipeline', 'if', 'while'}
         self.list_children = {}
         self.contains_variable_text = {'word', 'assignment'}
 
@@ -52,7 +52,6 @@ class NodeVisitor:
                 self._string = self._string + word + ' '
                 return DONT_DESCEND 
             else: 
-                print('node: ', node.dump())
                 raise ValueError('Error! Unsupported node kind encountered when converting NodeVisitor to string: ', node.kind)
             self._string = self._string + word + ' '
             return CONT
