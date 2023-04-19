@@ -20,7 +20,7 @@ class NodeVisitor:
         self.no_children = {'operator', 'reservedword', 'pipe', 'parameter', 'tilde', 'heredoc'}
         self.parts_children = {'list', 'pipeline', 'if', 'for', 'while', 'until', 'command', 'function', 'word', 'assignment'}
         self.command_children = {'commandsubstitution', 'processsubstitution'}
-        self.passable_nodes = {'command', 'list', 'compound', 'for', 'parameter', 'function', 'pipeline', 'if', 'while'}
+        self.passable_nodes = {'command', 'list', 'for', 'parameter', 'function', 'pipeline', 'if', 'while'}
         self.list_children = {}
         self.contains_variable_text = {'word', 'assignment'}
 
@@ -38,6 +38,15 @@ class NodeVisitor:
             if node.kind in self.passable_nodes: return CONT
             elif node.kind == 'operator': word = node.op
             elif node.kind == 'pipe': word = node.pipe
+            elif node.kind == 'redirect': word = node.type + ' '
+            elif node.kind == 'compound':
+                for part in node.list:
+                    word += str(NodeVisitor(part)) + ' '
+                if hasattr(node, 'redirects'):
+                    for part in node.redirects:
+                        word += str(NodeVisitor(part)) + ' '
+                self._string = self._string + word + ' '
+                return DONT_DESCEND
             elif node.kind == 'commandsubstitution': 
                 word = '$('
                 cmd = node.command
