@@ -38,14 +38,25 @@ class NodeVisitor:
             if node.kind in self.passable_nodes: return CONT
             elif node.kind == 'operator': word = node.op
             elif node.kind == 'pipe': word = node.pipe
-            elif node.kind == 'redirect': word = node.type + ' '
+            elif node.kind == 'redirect': 
+                if type(node.input) == bashlex.ast.node:
+                    word += str(NodeVisitor(node.input))
+                elif node.input is not None: 
+                    word += str(node.input)
+                word += str(node.type)
+                if type(node.output) == bashlex.ast.node:
+                    word += str(NodeVisitor(node.output))
+                elif node.output is not None:
+                    word += str(node.output)
+                self._string = self._string + ' ' + word
+                return DONT_DESCEND
             elif node.kind == 'compound':
                 for part in node.list:
-                    word += str(NodeVisitor(part)) + ' '
+                    word += ' ' + str(NodeVisitor(part))
                 if hasattr(node, 'redirects'):
                     for part in node.redirects:
-                        word += str(NodeVisitor(part)) + ' '
-                self._string = self._string + word + ' '
+                        word += ' ' + str(NodeVisitor(part))
+                self._string = self._string + ' ' + word
                 return DONT_DESCEND
             elif node.kind == 'commandsubstitution': 
                 word = '$('
@@ -53,20 +64,20 @@ class NodeVisitor:
                 for part in cmd.parts:
                     word += str(NodeVisitor(part)) + ' '
                 word = word[:-1] + ')'
-                self._string = self._string + word + ' '
+                self._string = self._string + ' ' + word
                 return DONT_DESCEND
 
             elif hasattr(node, 'word'): 
                 word = node.word
-                self._string = self._string + word + ' '
+                self._string = self._string + ' ' + word
                 return DONT_DESCEND 
             else: 
                 raise ValueError('Error! Unsupported node kind encountered when converting NodeVisitor to string: ', node.kind)
-            self._string = self._string + word + ' '
+            self._string = self._string + ' ' + word
             return CONT
 
         self.apply(apply_fn)
-        return self._string[:-1]     # remove trailing space cause wrong
+        return self._string.strip() # remove surrounding spaces cause wrong
 
 
     def __type__(self):
@@ -243,8 +254,10 @@ class NodeVisitor:
         elif k == 'redirect':
             if isinstance(root.output, bashlex.ast.node):
                 return [ root.output ]
-            if root.heredoc:
+            elif root.heredoc:
                 return [ root.heredoc[child_num] ]
+            else:
+                return []
         elif hasattr(root, 'list'):
             return root.list
         else:
