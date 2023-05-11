@@ -38,9 +38,14 @@ class TestAst(TestCase):
 		rebuilt_commands = str(NodeVisitor(nodes[0]))
 		expected_result = "for a in $n do wget that ; cd there ; mv here ; a=b ; done"
 		self.assertTrue(rebuilt_commands == expected_result)
-
 		self.assertTrue(str(NodeVisitor(None)) == '')
-
+		"""
+		node_string = 'history -n >/dev/null 2>&1'
+		node = bashlex.parse(node_string)[0]
+		rebuilt_command = str(NodeVisitor(node))
+		expected_result = 'history -n >/dev/null 2>&1'
+		self.assertTrue(rebuilt_command == expected_result)
+		"""
 
 	def test_apply(self):
 		# Build ast to test apply on

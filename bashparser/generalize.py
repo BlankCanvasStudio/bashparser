@@ -40,9 +40,7 @@ def parameter_tracking_generalization(generalize_nodes, params_used = {}, param_
 
     for node in generalize_nodes:
         if node.kind == 'word':
-            print('here1')
             if node.word not in params_used: 
-                print('here2')
                 params_used[node.word] = str(param_num) 
                 param_num += 1
             node.word = '%' + params_used[node.word]
@@ -58,9 +56,7 @@ def parameter_tracking_generalization(generalize_nodes, params_used = {}, param_
                     node.parts[0].word = "%d=%" + str(params_used[value_assigned])
                 for i in range(1, len(node.parts)):
                     if hasattr(node.parts[i], 'word'):
-                        print('here3')
                         if node.parts[i].word not in params_used: 
-                            print('here4')
                             params_used[node.parts[i].word] = str(param_num) 
                             param_num += 1
                         node.parts[i].word = '%' + str(params_used[node.parts[i].word])

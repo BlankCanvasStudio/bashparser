@@ -1,6 +1,10 @@
 Metadata-Version: 2.1
 Name: bashparser
+<<<<<<< HEAD
 Version: 0.7
+=======
+Version: 0.9
+>>>>>>> e84f9a27b9e8926d8a4e1e4ab18e3651161dae4d
 Summary: A framework for manipulating and analysing bash scripts
 Home-page: https://github.com/BlankCanvasStudio/bashparse
 Author: Spencer Stingley

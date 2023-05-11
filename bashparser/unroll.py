@@ -32,7 +32,7 @@ def strip_cmd(nodes):
 	return unrolled_commands
 
 
-def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}):
+def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}, strip_cmds=True):
 	# The ordering of this function is important. Tread lightly
 
 	nodes = bashparser.build_and_resolve_aliasing(nodes, alias_table)
@@ -41,9 +41,13 @@ def advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}):
 
 	nodes = bashparser.substitute_variables(nodes, var_list)
 
-	commands = strip_cmd(nodes)
+	if strip_cmds:
+		ret_val = strip_cmd(nodes)
+	else:
+		ret_val = nodes
 
-	return commands
+	return ret_val
+
 
 def main():
 	import argparse

@@ -295,7 +295,7 @@ The file unroll.py can be called from the CLI passing a --file argument to speci
 
 **strip_cmd(nodes)** - Strips all the commands executed from a series of bash nodes in order. No replacement occurs, it simply returns the raw commands.
 
-**advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={})** - This function strips the commands executed by the series of bash nodes after resolving and command aliasing, function calls, and variable substitutions. 
+**advanced_unroll(nodes, var_list={}, fn_dict={}, alias_table={}, strip_cmds=True)** - This function resolves command aliasing, function calls, and variable substitutions in a series of bash nodes, replacing as it progresses. The strip_cmds boolean can be toggeled to return only the commands executed or the replaced nodes. 
 
 
 
