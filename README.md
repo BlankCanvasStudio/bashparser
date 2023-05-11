@@ -264,10 +264,10 @@ This organization mirrors the packages files, if you care to contribute.
 
 **build_fn_table(nodes, fn_dict={})** - Iterates over the nodes looking for any function definitions. If one is found its added to the function dictionary with index of funciton name and a value of the list node present in between the brackets. This allows for eaier argument replacement later (pass in list node rather than array of commands). Returns the function dictionary for good measure but acts BY REFERENCE 
 
-**resolve_functions(nodes, fn_dict, var_list = None)** - Iterates over nodes, replacing any functions with their corresponding code and replacing any variables as well (including parameters passed into the function)
+**resolve_functions(nodes, fn_dict, var_list = None, replace_arguments = True)** - Iterates over nodes, replacing any functions with their corresponding code and replacing any variables as well (including parameters passed into the function). If you specify replace_arguments = False, the arguments won't be replaced
 
 
-**build_and_resolve_fns(nodes, fn_dict = {}, var_list = None)** - a helpful wrapper so the above functions can be done in a single step 
+**build_and_resolve_fns(nodes, fn_dict = {}, var_list = None, replace_arguments = True)** - a helpful wrapper so the above functions can be done in a single step 
 
 
 
