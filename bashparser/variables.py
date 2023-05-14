@@ -45,7 +45,7 @@ def replace_variables(nodes, var_list, replace_blanks=False):
         vstr.params_for_removal += [ copy.deepcopy(vstr.path) ]
 
 
-    def replace_value(vstr, name, var_list):
+    def replace_value(vstr, name_in, var_list):
         """ This function actually replaces the variable at the path specified in vstr with the name $name
             and saves all the replacements back to vstr.nodes """
 
@@ -55,14 +55,56 @@ def replace_variables(nodes, var_list, replace_blanks=False):
             most nested variable will have a replacement_width of 1 while the top most will have a 
             replacement_width of 2. I hope that makes sense """
         replacement_width = len(vstr.nodes)
+
         for el in vstr.variable_replacement_order:
             replacement_width //= len(var_list[el])
-            if el == name: break
-
+            if el == name_in: break
+        
+        # Get all the sub-indexing values
+        tmp = name_in.split(':')
+        name = tmp[0]
+        string_indexing_materials = tmp[1:]
+        tmp= name.split('[')
+        name = tmp[0]
+        array_indexing_materials = [ x[:-1] for x in tmp[1:] ]
+        
+        orig_values = var_list[name]
+        new_values = copy.deepcopy(var_list[name])
+        if len(array_indexing_materials):
+            for arr_index in array_indexing_materials:
+                if arr_index != '@' and arr_index.isdigit():
+                    if int(arr_index) < len(new_values):
+                        new_values = new_values[int(arr_index)]
+                    else:
+                        new_values = [ '' ]
+                else:   # if there is an @ index then its just asking for the entire array. Sub-arrays generated like strings
+                    new_values = new_values
+        
+        # Do string indexing
+        if len(string_indexing_materials):
+            start = int(string_indexing_materials[0])
+            length = int(string_indexing_materials[1])
+            if len(new_values) > 1:
+                new_values = new_values[start:start+length]
+            else: # its a string
+                new_values[0] = new_values[0][start:start+length]
+        
+        var_list[name] = new_values
+        if len(array_indexing_materials) or len(string_indexing_materials):
+            del var_list[name_in]
         """ h is used when the number of nodes is larger than the number of values 
             then you need to loop x times where x=itr_num and x*len(values) = len(vstr.nodes) """        
         factor = (len(var_list[name]) * replacement_width)
         itr_num = len(vstr.nodes) // factor
+        
+        def replace_pattern(pattern, vstr, nodes_index, name_in, delta, jth_node):
+            param_node = vstr.at_path(vstr.nodes[nodes_index], copy.copy(vstr.path))
+            orig_word = copy.deepcopy(jth_node.word)
+            jth_node.word = re.sub(pattern, value, jth_node.word)
+            if jth_node.word != orig_word:
+                vstr.nodes[nodes_index] = bashparser.ast.expand_ast_along_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
+                vstr.nodes[nodes_index] = bashparser.ast.shift_ast_right_of_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
+
 
         for h in range(0, itr_num):
             for i, value in enumerate(var_list[name]):     # By this point the number of nodes will have factor of num of values
@@ -70,17 +112,23 @@ def replace_variables(nodes, var_list, replace_blanks=False):
                     nodes_index = (h * factor) + (i * replacement_width) + j
 
                     if type(value) is str:
-                        pattern = r'\$' + re.escape(name) + r'\b'
                         jth_node = vstr.at_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]))
-                        jth_node.word = re.sub(pattern, value, jth_node.word)
-                        delta = len(value) - (len('$') + len(name))                  # Change in text len due to value sub. ie delta = new_len - old_len
-                        vstr.nodes[nodes_index] = bashparser.ast.expand_ast_along_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
-                        vstr.nodes[nodes_index] = bashparser.ast.shift_ast_right_of_path(vstr.nodes[nodes_index], copy.copy(vstr.path[:-1]), delta)
+                        orig_word = jth_node.word
+                        delta = len(value) - (len('$') + len(name_in)) # + ((jth_node.pos[1] - jth_node.pos[0]) - len(jth_node.word))             # Change in text len due to value sub. ie delta = new_len - old_len
+                        pattern = r'\$' + re.escape(name_in) + r'\b'
+                        replace_pattern(pattern, vstr, nodes_index, name_in, delta, jth_node)
+                        delta -= 2
+                        # if vstr.at_path(vstr.nodes[nodes_index], copy.copy(vstr.path)).value == '${' + name_in + '}':
+                        if orig_word == jth_node.word:
+                            print('at this point in replace variables bashparser')
+                            pattern = re.escape('${' + name_in + '}')
+                            replace_pattern(pattern, vstr, nodes_index, name_in, delta, jth_node)
+
                     elif type(value) is bashlex.ast.node: 
                         vstr.nodes[nodes_index] = vstr.swap_node(root=vstr.nodes[nodes_index], path=copy.copy(vstr.path[:-1]), child=value)
                     else: 
                         raise ValueError("Error! Variable replacement value wasn't a str or node. bashparser.variables.replace_variables")
-
+        var_list[name] = orig_values
 
     def apply_fn(node, vstr, var_list, replace_blanks=False):
         """ This function only works on parameter nodes in the tree. If there is no parameter 
