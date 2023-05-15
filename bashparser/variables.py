@@ -120,7 +120,6 @@ def replace_variables(nodes, var_list, replace_blanks=False):
                         delta -= 2
                         # if vstr.at_path(vstr.nodes[nodes_index], copy.copy(vstr.path)).value == '${' + name_in + '}':
                         if orig_word == jth_node.word:
-                            print('at this point in replace variables bashparser')
                             pattern = re.escape('${' + name_in + '}')
                             replace_pattern(pattern, vstr, nodes_index, name_in, delta, jth_node)
 
