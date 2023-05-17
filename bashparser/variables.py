@@ -19,6 +19,15 @@ def replace_variables(nodes, var_list, replace_blanks=False):
         if type(node) is not bashlex.ast.node: raise ValueError('Error! bashparser.variables.replace_variables(node != bashlex.ast.node)')
     if type(var_list) is not dict: raise ValueError('Error! bashparser.variables.replace_variables(var_list != dict)')
 
+    def add_to_variable_replacement_order(vstr, name_in):
+        tmp = name_in.split(':')
+        name = tmp[0]
+        string_indexing_materials = tmp[1:]
+        tmp= name.split('[')
+        name = tmp[0]
+        vstr.variable_replacement_order.add(name)
+
+
     def gen_new_trees(vstr, name):
         """ If the variable has multiple values and the variable has not been encountered yet, 
             then the nodes must be replicated to allow for these new divergent execution paths 
@@ -34,7 +43,8 @@ def replace_variables(nodes, var_list, replace_blanks=False):
 
         vstr.nodes = new_nodes
         vstr.accum_deltas = new_accum_deltas
-        vstr.variable_replacement_order.add(name)
+        add_to_variable_replacement_order(vstr, name)
+        # vstr.variable_replacement_order.add(name)
 
 
     def note_param_for_removal(vstr, name, var_list):
