@@ -1,7 +1,7 @@
 __pycache__
 */__pycache__
-bashparse.egg-info
-*/bashparse.egg-info
+*.egg-info
+*/*.egg-info
 *.pyc
 */testing.py
 */testing.pyc
@@ -9,3 +9,4 @@ testing.py
 testing.pyc
 test.sh
 */test.sh
+dist
