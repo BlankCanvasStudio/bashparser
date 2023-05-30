@@ -2,6 +2,9 @@
 
 <br/>
 
+# Installation
+You can install by running: `pip install bashparser` or building from source
+
 # Dependencies
     This package only depends on bashlex
 
